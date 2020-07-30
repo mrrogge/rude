@@ -1,0 +1,10 @@
+local options = {
+    _all={
+        e="require('spec.init')"
+    }
+}
+
+options._all['keep-going'] = false
+options._all['exclude-tags'] = 'skip'
+
+return options
