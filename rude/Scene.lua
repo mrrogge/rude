@@ -436,7 +436,7 @@ function Scene:addCom(entId, comId, source)
     c('rt,rn|s,rs,t|s')
     source = source or util.emptyTable
     local ent = self:getEnt(entId)
-    if type(template) == 'string' then
+    if type(source) == 'string' then
         source = self.engine:importData(source)
     end
     local com 
