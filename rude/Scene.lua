@@ -454,7 +454,7 @@ function Scene:removeCom(entId, comId)
     if self:hasCom(entId, comId) then
         self:getCom(entId, comId):destroy()
     end
-    local ent = self:get(entId)
+    local ent = self:getEnt(entId)
     ent[comId] = nil
     return self
 end
