@@ -436,7 +436,7 @@ function Scene:addCom(entId, comId, source)
     c('rt,rn|s,rs,t|s')
     source = source or util.emptyTable
     local ent = self:getEnt(entId)
-    if type(template) == 'string' then
+    if type(source) == 'string' then
         source = self.engine:importData(source)
     end
     local com 
@@ -454,7 +454,7 @@ function Scene:removeCom(entId, comId)
     if self:hasCom(entId, comId) then
         self:getCom(entId, comId):destroy()
     end
-    local ent = self:get(entId)
+    local ent = self:getEnt(entId)
     ent[comId] = nil
     return self
 end
