@@ -41,6 +41,7 @@ function Scene:initialize(engine, config)
     self.systemClasses = {}
     self.systems = {}
     self.scripts = {}
+    self.removedEnts = {}
     return self
 end
 
@@ -325,6 +326,11 @@ function Scene:update(dt)
     if self._pauseState == 'pausing' or self._pauseState == 'running' then
         self:onUpdate(dt)
     end
+    --Remove entities flagged with removeEntDelayed()
+    for i, id in ipairs(self.removedEnts) do
+        self:removeEnt(id)
+    end
+    util.clearTable(self.removedEnts)
 end
 
 ---Called every draw frame.
@@ -416,6 +422,11 @@ function Scene:removeEnt(id)
     self.count = self.count - 1
     self:emit('removedEnt', id)
     return self
+end
+
+---Flags an entity for removal at the end of the frame.
+function Scene:removeEntDelayed(id)
+    table.insert(self.removedEnts, id)
 end
 
 ---Returns the data for a given entity ID.
