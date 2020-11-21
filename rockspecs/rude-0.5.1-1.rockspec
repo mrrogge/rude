@@ -1,5 +1,5 @@
 package = "rude"
-version = "0.5.1-3"
+version = "0.5.1-1"
 source = {
    url = "git://github.com/mrrogge/rude",
    tag = "v0.5.1"
