@@ -41,6 +41,7 @@ function Scene:initialize(engine, config)
     self.systemClasses = {}
     self.systems = {}
     self.scripts = {}
+    self.removedEnts = {}
     return self
 end
 
@@ -325,6 +326,11 @@ function Scene:update(dt)
     if self._pauseState == 'pausing' or self._pauseState == 'running' then
         self:onUpdate(dt)
     end
+    --Remove entities flagged with removeEntDelayed()
+    for i, id in ipairs(self.removedEnts) do
+        self:removeEnt(id)
+    end
+    util.clearTable(self.removedEnts)
 end
 
 ---Called every draw frame.
@@ -375,7 +381,7 @@ end
 
 ---Adds a new entity to the scene.
 function Scene:addEnt(source, id)
-    c('rt,t|s,n')
+    c('rt,t|s,n|s')
     id = id or util.nextIdx(self.ents)
     if self.ents[id] then
         alert(('Entity ID %s already exists; either remove the existing entity or use a different ID.'):format(id), 'warning')
@@ -403,7 +409,7 @@ end
 
 ---Removes an entity from the scene.
 function Scene:removeEnt(id)
-    c('rt,rn')
+    c('rt,rn|s')
     if not self:entExists(id) then
         alert(('Entity ID %s does not exist, could not remove.'):format(id), 'warning')
         return self
@@ -418,25 +424,30 @@ function Scene:removeEnt(id)
     return self
 end
 
+---Flags an entity for removal at the end of the frame.
+function Scene:removeEntDelayed(id)
+    table.insert(self.removedEnts, id)
+end
+
 ---Returns the data for a given entity ID.
 function Scene:getEnt(id)
-    c('rt,rn')
+    c('rt,rn|s')
     assert.is.True(self:entExists(id))
     return self.ents[id]
 end
 
 ---Checks if an entity exists for a given ID.
 function Scene:entExists(id)
-    c('rt,rn')
+    c('rt,rn|s')
     return not not self.ents[id]
 end
 
 ---Builds a new component and adds it to an entity.
 function Scene:addCom(entId, comId, source)
-    c('rt,rn,rs,t|s')
+    c('rt,rn|s,rs,t|s')
     source = source or util.emptyTable
     local ent = self:getEnt(entId)
-    if type(template) == 'string' then
+    if type(source) == 'string' then
         source = self.engine:importData(source)
     end
     local com 
@@ -450,11 +461,11 @@ end
 
 ---Removes a component from an entity.
 function Scene:removeCom(entId, comId)
-    c('rt,rn,rs')
+    c('rt,rn|s,rs')
     if self:hasCom(entId, comId) then
         self:getCom(entId, comId):destroy()
     end
-    local ent = self:get(entId)
+    local ent = self:getEnt(entId)
     ent[comId] = nil
     return self
 end
@@ -463,7 +474,7 @@ end
 -- If component or entity does not exist, an error will be raised. To test if a component
 -- exists or not, use hasCom().
 function Scene:getCom(entId, comId)
-    c('rt,rn,rs')
+    c('rt,rn|s,rs')
     assert.is.True(self:entExists(entId))
     assert.has.component(self, entId, comId)
     local ent = self:getEnt(entId)
@@ -558,7 +569,7 @@ end
 
 ---Checks if an entity ID has the specified components.
 function Scene:hasCom(id, ...)
-    c('rt')
+    c('rt,rn|s')
     if not self:entExists(id) then
         return false
     end
@@ -694,7 +705,7 @@ end
 --|-----------------------------------------------------------------------------
 ---Tags an entity.
 function Scene:tagEnt(id, tag)
-    c('rt,rn,rn|s')
+    c('rt,rn|s,rn|s')
     self.tags[tag] = self.tags[tag] or {}
     self.tags[tag][id] = true
     return self
@@ -702,7 +713,7 @@ end
 
 ---Removes a tag for an entity.
 function Scene:untagEnt(id, tag)
-    c('rt,rn,rn|s')
+    c('rt,rn|s,rn|s')
     if not self.tags[tag] then return self end
     self.tags[tag][id] = nil
     return self
@@ -710,6 +721,7 @@ end
 
 ---Checks if an entity ID is tagged with the specified tags.
 function Scene:isEntTagged(id, ...)
+    c('rt,rn|s')
     if not self:entExists(id) then return false end
     for i=1, select('#',...) do
         local tag = select(i,...)

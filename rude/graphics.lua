@@ -24,7 +24,7 @@ end
 -- Fonts can be created using love.graphics.newFont(). The id can be referenced
 -- later in component data, e.g. drawable text components.
 function module.registerFont(id, font)
-    c('rn|s,rt')
+    c('rn|s,ru|t')
     module._fonts[id] = font
 end
 
