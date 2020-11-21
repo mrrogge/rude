@@ -11,14 +11,12 @@ dir='doc'
 
 format='markdown'
 
-topics='manual'
-kind_names={
-    topic='Manual'
-}
-
 custom_tags={
     {'remark', title='Remarks'}
 }
 
 new_type('sfunction', 'Static Methods', false, 'Parameters')
 
+topics={
+    'topics/Getting_Started.md'
+}
