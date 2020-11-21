@@ -183,4 +183,10 @@ function util.isClose(x, y, mTol, mTol)
     return mErr <= mTol and eErr <= eTol
 end
 
+---Compares one number to a pair of numbers and returns the closest of the pair.
+function util.nearestNum(x, a, b)
+    c('rn,rn,rn')
+    if abs(a - x) < abs(b - x) then return a else return b end
+end
+
 return util
