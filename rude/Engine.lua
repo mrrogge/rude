@@ -120,6 +120,42 @@ function Engine:keyreleased(key, scancode)
     end
 end
 
+function Engine:mousemoved(x, y, dx, dy, istouch)
+    c('rt,rn,rn,rn,rn,rb')
+    if self:getSceneStackSize() == 0 then return end
+    local scene = self:getTopScene()
+    if scene then
+        scene:mousemoved(x, y, dx, dy, istouch)
+    end
+end
+
+function Engine:mousepressed(x, y, button, istouch, presses)
+    c('rt,rn,rn,rn,rb,rn')
+    if self:getSceneStackSize() == 0 then return end
+    local scene = self:getTopScene()
+    if scene then
+        scene:mousepressed(x, y, button, istouch, presses)
+    end
+end
+
+function Engine:mousereleased(x, y, button, istouch, presses)
+    c('rt,rn,rn,rn,rb,rn')
+    if self:getSceneStackSize() == 0 then return end
+    local scene = self:getTopScene()
+    if scene then
+        scene:mousereleased(x, y, button, istouch, presses)
+    end
+end
+
+function Engine:wheelmoved(x, y)
+    c('rt,rn,rn')
+    if self:getSceneStackSize() == 0 then return end
+    local scene = self:getTopScene()
+    if scene then
+        scene:wheelmoved(x, y)
+    end
+end
+
 --TODO: add the rest of the callback functions
 --------------------------------------------------------------------------------
 

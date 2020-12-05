@@ -370,6 +370,42 @@ function Scene:keyreleased(key, scancode)
     c('rt,rs,rs')
     self:onKeyreleased(key, scancode)
 end
+
+function Scene:onMousemoved(x, y, dx, dy, istouch)
+
+end
+
+function Scene:mousemoved(x, y, dx, dy, istouch)
+    c('rt,rn,rn,rn,rn,rb')
+    self:onMousemoved(x, y, dx, dy, istouch)
+end
+
+function Scene:onMousepressed(x, y, button, istouch, presses)
+
+end
+
+function Scene:mousepressed(x, y, button, istouch, presses)
+    c('rt,rn,rn,rn,rb,rn')
+    self:onMousepressed(x, y, button, istouch, presses)
+end
+
+function Scene:onMousereleased(x, y, button, istouch, presses)
+
+end
+
+function Scene:mousereleased(x, y, button, istouch, presses)
+    c('rt,rn,rn,rn,rb,rn')
+    self:onMousereleased(x, y, button, istouch, presses)
+end
+
+function Scene:onWheelmoved(x, y)
+
+end
+
+function Scene:wheelmoved(x, y)
+    c('rt,rn,rn')
+    self:onWheelmoved(x, y)
+end
 --------------------------------------------------------------------------------
 
 --|-----------------------------------------------------------------------------
