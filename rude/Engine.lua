@@ -316,6 +316,9 @@ function Engine:attach()
     self._initCallbacks.draw = love.draw
     self._initCallbacks.keypressed = love.keypressed
     self._initCallbacks.keyreleased = love.keyreleased
+    self._initCallbacks.mousemoved = love.mousemoved
+    self._initCallbacks.mousepressed = love.mousepressed
+    self._initCallbacks.mousereleased = love.mousereleased
     love.load = function(...)
         if self._initCallbacks.load then
             self._initCallbacks.load(...)
@@ -348,6 +351,27 @@ function Engine:attach()
             self._initCallbacks.keyreleased(key, scancode)
         end
         self:keyreleased(key, scancode)
+    end
+    love.mousemoved = function(x,y,dx,dy,istouch)
+        c('rn,rn,rn,rn,rb')
+        if self._initCallbacks.mousemoved then
+            self._initCallbacks.mousemoved(x,y,dx,dy,istouch)
+        end
+        self:mousemoved(x,y,dx,dy,istouch)
+    end
+    love.mousepressed = function(x,y,button,istouch,presses)
+        c('rn,rn,rn,rb,rn')
+        if self._initCallbacks.mousepressed then
+            self._initCallbacks.mousepressed(x,y,button,istouch,presses)
+        end
+        self:mousepressed(x,y,button,istouch,presses)
+    end
+    love.mousereleased = function(x,y,button,istouch,presses)
+        c('rn,rn,rn,rb,rn')
+        if self._initCallbacks.mousereleased then
+            self._initCallbacks.mousereleased(x,y,button,istouch,presses)
+        end
+        self:mousereleased(x,y,button,istouch,presses)
     end
     self._attached = true
 end
