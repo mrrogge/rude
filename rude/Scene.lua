@@ -479,6 +479,7 @@ function Scene:entExists(id)
 end
 
 ---Builds a new component and adds it to an entity.
+-- Returns the new component table.
 function Scene:addCom(entId, comId, source)
     c('rt,rn|s,rs,t|s')
     source = source or util.emptyTable
@@ -492,7 +493,7 @@ function Scene:addCom(entId, comId, source)
     end
     com = ent[comId]
     self.engine:mergeData(source, com, true)
-    return self
+    return com
 end
 
 ---Removes a component from an entity.
