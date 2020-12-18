@@ -141,6 +141,46 @@ describe('an Engine instance:', function()
         end)
     end)
 
+    describe('mousemoved()', function()
+        it('calls mousemoved() on the top scene', function()
+            local scene = e:newScene('test')
+            e:pushScene(scene)
+            spy.on(scene, 'mousemoved')
+            e:mousemoved(0,0,0,0,false)
+            assert.spy(scene.mousemoved).was.called()
+        end)
+    end)
+
+    describe('mousepressed()', function()
+        it('calls mousepressed() on the top scene', function()
+            local scene = e:newScene('test')
+            e:pushScene(scene)
+            spy.on(scene, 'mousepressed')
+            e:mousepressed(0,0,0,false,1)
+            assert.spy(scene.mousepressed).was.called()
+        end)
+    end)
+
+    describe('mousereleased()', function()
+        it('calls mousereleased() on the top scene', function()
+            local scene = e:newScene('test')
+            e:pushScene(scene)
+            spy.on(scene, 'mousereleased')
+            e:mousereleased(0,0,0,false,1)
+            assert.spy(scene.mousereleased).was.called()
+        end)
+    end)
+
+    describe('wheelmoved()', function()
+        it('calls wheelmoved() on the top scene', function()
+            local scene = e:newScene('test')
+            e:pushScene(scene)
+            spy.on(scene, 'wheelmoved')
+            e:wheelmoved(0,0)
+            assert.spy(scene.wheelmoved).was.called()
+        end)
+    end)
+
     describe('newScene()', function()
         it('when not passed a class, returns a new Scene instance', function()
             local scene = e:newScene('test')
@@ -351,6 +391,26 @@ describe('an Engine instance:', function()
             love.keyreleased('','')
             assert.spy(e.keyreleased).was.called()
             e.keyreleased:revert()
+
+            spy.on(e, 'mousemoved')
+            love.mousemoved(0,0,0,0,false)
+            assert.spy(e.mousemoved).was.called()
+            e.mousemoved:revert()
+
+            spy.on(e, 'mousepressed')
+            love.mousepressed(0,0,0,false,1)
+            assert.spy(e.mousepressed).was.called()
+            e.mousepressed:revert()
+            
+            spy.on(e, 'mousereleased')
+            love.mousereleased(0,0,0,false,1)
+            assert.spy(e.mousereleased).was.called()
+            e.mousereleased:revert()
+
+            spy.on(e, 'wheelmoved')
+            love.wheelmoved(0,0)
+            assert.spy(e.wheelmoved).was.called()
+            e.wheelmoved:revert()
         end)
         it('once complete, original LOVE callbacks are still called', function()
             local e = Engine()
@@ -360,7 +420,11 @@ describe('an Engine instance:', function()
                 update=spy.on(love, 'update'),
                 draw=spy.on(love, 'draw'),
                 keypressed=spy.on(love, 'keypressed'),
-                keyreleased=spy.on(love, 'keyreleased')
+                keyreleased=spy.on(love, 'keyreleased'),
+                mousemoved=spy.on(love, 'mousemoved'),
+                mousepressed=spy.on(love, 'mousepressed'),
+                mousereleased=spy.on(love, 'mousereleased'),
+                wheelmoved=spy.on(love, 'wheelmoved')
             }
             e:attach()
 
@@ -383,6 +447,22 @@ describe('an Engine instance:', function()
             love.keyreleased('','')
             assert.spy(initCallbacks.keyreleased).was.called()
             initCallbacks.keyreleased:revert()
+
+            love.mousemoved(0,0,0,0,false)
+            assert.spy(initCallbacks.mousemoved).was.called()
+            initCallbacks.mousemoved:revert()
+
+            love.mousepressed(0,0,0,false,1)
+            assert.spy(initCallbacks.mousepressed).was.called()
+            initCallbacks.mousepressed:revert()
+
+            love.mousereleased(0,0,0,false,1)
+            assert.spy(initCallbacks.mousereleased).was.called()
+            initCallbacks.mousereleased:revert()
+
+            love.wheelmoved(0,0)
+            assert.spy(initCallbacks.wheelmoved).was.called()
+            initCallbacks.wheelmoved:revert()
         end)
     end)
 
@@ -415,7 +495,27 @@ describe('an Engine instance:', function()
             spy.on(e, 'keyreleased')
             love.keyreleased('','')
             assert.spy(e.keyreleased).was_not.called()
-            e.keyreleased:revert()    
+            e.keyreleased:revert()
+            
+            spy.on(e, 'mousemoved')
+            love.mousemoved(0,0,0,0,false)
+            assert.spy(e.mousemoved).was_not.called()
+            e.mousemoved:revert()
+
+            spy.on(e, 'mousepressed')
+            love.mousepressed(0,0,0,false,1)
+            assert.spy(e.mousepressed).was_not.called()
+            e.mousepressed:revert()
+
+            spy.on(e, 'mousereleased')
+            love.mousereleased(0,0,0,false,1)
+            assert.spy(e.mousereleased).was_not.called()
+            e.mousereleased:revert()
+
+            spy.on(e, 'wheelmoved')
+            love.wheelmoved(0,0)
+            assert.spy(e.wheelmoved).was_not.called()
+            e.wheelmoved:revert()
         end)
         it('allows original LOVE callbacks to be called', function()
             local e = Engine()
@@ -424,7 +524,11 @@ describe('an Engine instance:', function()
                 update=spy.on(love, 'update'),
                 draw=spy.on(love, 'draw'),
                 keypressed=spy.on(love, 'keypressed'),
-                keyreleased=spy.on(love, 'keyreleased')
+                keyreleased=spy.on(love, 'keyreleased'),
+                mousemoved=spy.on(love, 'mousemoved'),
+                mousepressed=spy.on(love, 'mousepressed'),
+                mousereleased=spy.on(love, 'mousereleased'),
+                wheelmoved=spy.on(love, 'wheelmoved')
             }
             e:attach()
             e:detach()
@@ -447,7 +551,23 @@ describe('an Engine instance:', function()
 
             love.keyreleased('','')
             assert.spy(initCallbacks.keyreleased).was.called()
-            initCallbacks.keyreleased:revert()        
+            initCallbacks.keyreleased:revert()      
+            
+            love.mousemoved(0,0,0,0,false)
+            assert.spy(initCallbacks.mousemoved).was.called()
+            initCallbacks.mousemoved:revert()
+
+            love.mousepressed(0,0,0,false,1)
+            assert.spy(initCallbacks.mousepressed).was.called()
+            initCallbacks.mousepressed:revert()
+
+            love.mousereleased(0,0,0,false,1)
+            assert.spy(initCallbacks.mousereleased).was.called()
+            initCallbacks.mousereleased:revert()
+
+            love.wheelmoved(0,0)
+            assert.spy(initCallbacks.wheelmoved).was.called()
+            initCallbacks.wheelmoved:revert()
         end)
     end)
 
