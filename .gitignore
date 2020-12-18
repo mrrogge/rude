@@ -2,4 +2,7 @@ doc/
 out/
 env/
 .vscode/
-*.src.rock
+*.src.rock/luarocks
+/lua
+/lua_modules
+/.luarocks
