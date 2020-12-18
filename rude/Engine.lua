@@ -319,6 +319,7 @@ function Engine:attach()
     self._initCallbacks.mousemoved = love.mousemoved
     self._initCallbacks.mousepressed = love.mousepressed
     self._initCallbacks.mousereleased = love.mousereleased
+    self._initCallbacks.wheelmoved = love.wheelmoved
     love.load = function(...)
         if self._initCallbacks.load then
             self._initCallbacks.load(...)
@@ -372,6 +373,13 @@ function Engine:attach()
             self._initCallbacks.mousereleased(x,y,button,istouch,presses)
         end
         self:mousereleased(x,y,button,istouch,presses)
+    end
+    love.wheelmoved = function(x,y)
+        c('rn,rn')
+        if self._initCallbacks.wheelmoved then
+            self._initCallbacks.wheelmoved(x,y)
+        end
+        self:wheelmoved(x,y)
     end
     self._attached = true
 end
