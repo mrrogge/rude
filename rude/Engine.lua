@@ -6,6 +6,7 @@ local dkjson = require('dkjson')
 local bitser = require('rude.lib.bitser')
 local alert = require('rude.alert')
 local assert = require('rude.assert')
+local DataContext = require('rude.DataContext')
 local EventEmitterMixin = require('rude.EventEmitterMixin')
 local graphics = require('rude.graphics')
 local PoolableMixin = require('rude.PoolableMixin')
@@ -24,6 +25,7 @@ function Engine:initialize(config)
     -- expose the public rude modules to make access easier.
     self.alert = alert
     self.assert = assert
+    self.DataContext = DataContext
     self.Engine = Engine
     self.EventEmitterMixin = EventEmitterMixin
     self.graphics = graphics
@@ -42,9 +44,8 @@ function Engine:initialize(config)
         self:importConfig(config)
     end
 
-    self.componentClasses = {}
-    self.systemClasses = {}
-    self.dataClasses = {}
+    self.dataContext = DataContext()
+    self.currentContext = self.dataContext
     self.scripts = {}
 
     --private members
@@ -411,94 +412,63 @@ function Engine:usePlugin(plugin, ...)
     plugin(self, ...)
 end
 
----Registers a component class to the engine.
-function Engine:registerComponentClass(id, componentClass)
-    c('rt,rs,rt|f|s')
-    if type(componentClass) == 'string' then
-        componentClass = require(componentClass)
-    end
-    self.componentClasses[id] = componentClass
+---Sets a new active data context for all context-specific operations.
+-- If context is nil, the active context is set to the engine's default context instance.
+function Engine:useContext(context)
+    c('rt,t')
+    self.currentContext = context or self.dataContext
+    return self
 end
 
----Checks if a component class exists for a given ID.
-function Engine:componentClassExists(id)
-    c('rt,rs')
-    return not not self.componentClasses[id]
+function Engine:getCurrentContext()
+    c('rt')
+    return self.currentContext
+end
+
+---Registers a component class to a string id.
+-- If context is a DataContext instance, the class will be registered to it. Otherwise if context is nil, the class will be registered to the Engine's default context.
+function Engine:registerComClass(id, class, context)
+    c('rt,rs,rt,t')
+    context = context or self.currentContext
+    context:registerComClass(id, class)
+    return self
 end
 
 ---Returns a registered component class.
-function Engine:getComponentClass(id)
-    c('rt,rs')
-    assert.is.truthy(self.componentClasses[id])
-    return self.componentClasses[id]
+function Engine:getComClass(id, context)
+    c('rt,rs,t')
+    context = context or self.currentContext
+    return context:getComClass(id)
 end
 
----Registers a system class to the engine.
-function Engine:registerSystemClass(id, systemClass)
-    c('rt,rs,rt|s')
-    if type(systemClass) == 'string' then
-        systemClass = require(systemClass)
-    end
-    self.systemClasses[id] = systemClass
+function Engine:registerClass(class, context)
+    c('rt,rt,t')
+    context = context or self.currentContext
+    context:registerClass(class)
+    return self
 end
 
----Checks if a system class exists for a given ID.
-function Engine:systemClassExists(id)
-    c('rt,rs')
-    return not not self.systemClasses[id]
+function Engine:registerFunction(id, fnc, context)
+    c('rt,rf,t')
+    context = context or self.currentContext
+    context:registerFunction(id, fnc)
+    return self
 end
 
----Returns a registered system class.
-function Engine:getSystemClass(id)
-    c('rt,rs')
-    assert.is.truthy(self.systemClasses[id])
-    return self.systemClasses[id]
-end
-
----Registers a data class to the engine.
-function Engine:registerDataClass(id, dataClass)
-    c('rt,rs,rt|s')
-    if type(dataClass) == 'string' then
-        dataClass = require(dataClass)
-    end
-    self.dataClasses[id] = dataClass
-end
-
----Checks if a data class exists for a given ID.
-function Engine:dataClassExists(id)
-    c('rt,rs')
-    return not not self.dataClasses[id]
-end
-
----Returns a registered data class.
-function Engine:getDataClass(id)
-    c('rt,rs')
-    assert.is.truthy(self.dataClasses[id])
-    return self.dataClasses[id]
-end
-
----Registers a script function to the engine.
-function Engine:registerScript(id, script)
-    c('rt,rs,rf')
-    self.scripts[id] = script
-end
-
----Checks if a script function exists for a given ID.
-function Engine:scriptExists(id)
-    c('rt,rs')
-    return not not self.scripts[id]
-end
-
----Returns a registered script function.
-function Engine:getScript(id)
-    c('rt,rs')
-    assert.is.truthy(self.scripts[id])
-    return self.scripts[id]
+function Engine:getFunction(id, context)
+    c('rt,rs,t')
+    context = context or self.currentContext
+    return context:getFunction(id)
 end
 
 --------------------------------------------------------------------------------
 -- External Data Functions
 --------------------------------------------------------------------------------
+local function mergeData(engine, source, target)
+    c('rt,rany,rany')
+    
+end
+
 ---Merges data from a source table into a target table.
 function Engine:mergeData(source, target, convertToObjects)
     --TODO: this needs a lot of cleanup

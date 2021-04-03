@@ -16,6 +16,7 @@ local rude = {}
 
 rude.alert=require('rude.alert')
 rude.assert=require('rude.assert')
+rude.DataContext=require('rude.DataContext')
 rude.Engine=require('rude.Engine')
 rude.EventEmitterMixin=require('rude.EventEmitterMixin')
 rude.graphics=require('rude.graphics')
