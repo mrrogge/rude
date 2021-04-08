@@ -5,11 +5,8 @@ local bitser = require('rude.lib.bitser')
 
 describe('an Engine instance:', function()
     local e
-    --Create a data class for testing
-    local TestClass = class('TestClass')
     before_each(function()
         e = Engine()
-        e:registerDataClass('TestClass', TestClass)
     end)
     it('exposes the public modules', function()
         assert.is.equal(e.alert, require('rude.alert'))
