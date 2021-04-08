@@ -473,7 +473,7 @@ end
 --------------------------------------------------------------------------------
 -- External Data Functions
 --------------------------------------------------------------------------------
-function engine:mergeData(source, target, context)
+function Engine:mergeData(source, target, context)
     c('rt,rt,rt,t')
     context = context or self.currentContext
     for k, v in pairs(source) do
