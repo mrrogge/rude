@@ -703,24 +703,6 @@ function Scene:hasCom(id, ...)
     return true
 end
 
----Imports scene data from a source.
-function Scene:importData(source)
-    c('rt,rt|s')
-    local source = self.engine:importData(source)
-    for id, ent in pairs(source.ents) do
-        self:addEnt(ent, id)
-    end
-    self.engine:mergeData(source.tags, self.tags)
-    return self
-end
-
----Exports scene data to a source.
-function Scene:exportData(mode, format, fpath)
-    c('rt,s,s,s')
-    self.engine:exportData(self, mode, format, fpath)
-    return self
-end
-
 ---Applies a plugin to the scene.
 function Scene:usePlugin(plugin, ...)
     c('rt,rt|f|s')
@@ -728,96 +710,6 @@ function Scene:usePlugin(plugin, ...)
         plugin = require(plugin)
     end
     plugin(self, ...)
-end
-
----Registers a component class to the scene.
-function Scene:registerComponentClass(id, componentClass)
-    c('rt,rs,rt|f|s')
-    if type(componentClass) == 'string' then
-        componentClass = require(componentClass)
-    end
-    self.componentClasses[id] = componentClass
-end
-
----Checks if a component class exists for a given ID.
-function Scene:componentClassExists(id)
-    return (not not self.componentClasses[id]) or self.engine:componentClassExists(id)
-end
-
----Returns a registered component class.
-function Scene:getComponentClass(id)
-    c('rt,rs')
-    return self.componentClasses[id] or self.engine:getComponentClass(id)
-end
-
----Registers a system class to the scene.
-function Scene:registerSystemClass(id, systemClass)
-    c('rt,rs,rt|s')
-    if type(systemClass) == 'string' then
-        systemClass = require(systemClass)
-    end
-    self.systemClasses[id] = systemClass
-end
-
----Checks if a system class exists for a given ID.
-function Scene:systemClassExists(id)
-    c('rt,rs')
-    return (not not self.systemClasses[id]) or self.engine:systemClassExists(id)
-end
-
----Returns a registered system class.
-function Scene:getSystemClass(id)
-    c('rt,rs')
-    return self.systemClasses[id] or self.engine:getSystemClass(id)
-end
-
----Activates a system for a given ID.
-function Scene:useSystem(id, ...)
-    c('rt,rs,t|s')
-    local cls = self:getSystemClass(id)
-    self.systems[id] = cls(self, ...)
-end
-
----Check if the scene is using a given system ID.
-function Scene:hasSystem(id)
-    c('rt,rs')
-    return not not self.systems[id]
-end
-
----Returns the system object for the scene.
-function Scene:getSystem(id)
-    c('rt,rs')
-    assert.is.Truthy(self.systems[id])
-    return self.systems[id]
-end
-
----Imports configuration data for the scene.
-function Scene:importConfig(config)
-    c('rt,rt|s')
-    if type(config) == 'string' then
-        config = self.engine:importData(config)
-    end
-    self:mergeData(config, self.config)
-    return self
-end
-
----Registers a script function to the scene.
-function Scene:registerScript(id, script)
-    c('rt,rs,rf')
-    self.scripts[id] = script
-end
-
----Checks if a script function exists for a given ID.
-function Scene:scriptExists(id)
-    c('rt,rs')
-    return (not not self.scripts[id]) or self.engine:scriptExists(id)
-end
-
----Returns a registered script function.
-function Scene:getScript(id)
-    c('rt,rs')
-    assert.is.True(self:scriptExists(id))
-    return self.scripts[id] or self.engine:getScript(id)
 end
 
 --|-----------------------------------------------------------------------------
@@ -842,7 +734,9 @@ end
 ---Checks if an entity ID is tagged with the specified tags.
 function Scene:isEntTagged(id, ...)
     c('rt,rn|s')
-    if not self:entExists(id) then return false end
+    if not self:entExists(id) then return 
+        nil, ('entity ID %s does not exist.'):format(id)
+    end
     for i=1, select('#',...) do
         local tag = select(i,...)
         if not self.tags[tag] then return false end
@@ -855,9 +749,10 @@ end
 -- For multiple matching IDs, the entity returned is arbitary.
 function Scene:getEntWithTag(...)
     c('rt')
+    if not self.tags[select(1, ...)] then return end
     local entId, found, done
     while not found and not done do
-        entId = next(self.ents, entId)
+        entId = next(self.tags[select(1, ...)], entId)
         done = not entId
         for i=1, select('#',...) do
             if entId == nil then
@@ -875,6 +770,7 @@ end
 
 ---Returns an iterator that yields entity IDs with the specified tag(s).
 function Scene:tagIter(...)
+    c('rt')
     --Look for an existing cached iterator.
     local iterKey = util.concat(',', ...)
     if self._tagIterCache[iterKey] then
@@ -884,9 +780,11 @@ function Scene:tagIter(...)
     local entId = nil
     local args = {...}
     local iter = function()
+        if not args[1] then return end
+        if not self.tags[args[1]] then return end
         local found, done
         while not found and not done do
-            entId, _ = next(self.ents, entId)
+            entId, _ = next(self.tags[args[1]], entId)
             done = not entId
             for _, tag in ipairs(args) do
                 if entId == nil then
