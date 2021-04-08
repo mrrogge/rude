@@ -554,6 +554,47 @@ function Scene:entIter()
     end
 end
 
+local buildHasComIterKeyTemp = {}
+local function buildHasComIterKey(self, ...)
+    c('rt')
+    util.clearTable(buildHasComIterKeyTemp)
+    for i=1, select('#', ...), 1 do
+        local class = select(i, ...)
+        local err
+        if type(class) == 'string' then
+            class, err = self.engine.currentContext:getComClass(class)
+        elseif type(class) == 'table' then
+            --
+        else
+            class = nil
+        end
+        if class then
+            table.insert(buildHasComIterKeyTemp, tostring(class))
+        end
+    end
+    return table.concat(',', buildHasComIterKeyTemp)
+end
+
+local function buildComClassList(self, tbl, ...)
+    c('rt,t')
+    tbl = tbl or {}
+    for i=1, select('#', ...), 1 do
+        local class = select(i, ...)
+        local err
+        if type(class) == 'string' then
+            class, err = self.engine.currentContext:getComClass(class)
+        elseif type(class) == 'table' then
+            --
+        else
+            class = nil
+        end
+        if class then
+            table.insert(tbl, class)
+        end
+    end
+    return tbl
+end
+
 local hasComIterTempTable = {}
 ---Returns an iterator that yields entity IDs with all the specified components.  
 -- Note that these iterators will be cached to the scene for optimization purposes. You
@@ -561,55 +602,26 @@ local hasComIterTempTable = {}
 -- clearAllHasComIterCache().
 function Scene:hasComIter(...)
     c('rt')
-    -- Each cache entry is a string representation of all passed component classes.
-    util.clearTable(hasComIterTempTable)
-    for i=1, select('#', ...), 1 do
-        local class = select(i, ...)
-        local err
-        if type(class) == 'string' then
-            class, err = self.engine.currentContext:getComClass(class)
-            if not class then
-                error(err)
-            end
-        elseif type(class) == 'table' then
-            --
-        else
-            error('hasComIter() only accepts component objects or strings.')
-        end
-        table.insert(hasComIterTempTable, tostring(class))
-    end
-    --Look for an existing cached iterator.
-    local iterKey = table.concat(',', hasComIterTempTable)
+    local iterKey = buildHasComIterKey(self, ...)
     if self._hasComIterCache[iterKey] then
         return self._hasComIterCache[iterKey]
     end
     --Create the closure
     local entId = nil
-    local args = {...}
+    local classes = buildComClassList(self, nil, ...)
     local iter = function()
-        while true do
-            local class
-            for i=1, #args, 1 do
-                class = args[i]
-                if type(class) == 'string' then
-                    class = self.engine.currentContext:getComClass(class)
-                end
-                if class then break end
-            end
-            entId = entId or self.com[]
-        end
-
-
+        if not classes[1] then return end
+        if not self.com[classes[1]] then return end
         local found, done
         while not found and not done do
-            entId, _ = next(self.ents, entId)
+            entId = next(self.com[classes[1]], entId)
             done = not entId
-            for _, comId in ipairs(args) do
+            for i=2, #classes, 1 do
                 if entId == nil then
                     found = false
                     break
                 end
-                found = self:hasCom(entId, comId)
+                found = self.com[classes[i]] and self.com[classes[i]][entId]
                 if not found then
                     break
                 end
@@ -624,7 +636,7 @@ end
 ---Clears a cached iterator built from hasComIter().
 function Scene:clearHasComIterCache(...)
     c('rt')
-    local iterKey = util.concat(',', ...)
+    local iterKey = buildHasComIterKey(self, ...)
     self._hasComIterCache[iterKey] = nil
     return self
 end
@@ -638,20 +650,25 @@ function Scene:clearAllHasComIterCache()
     return self
 end
 
+local getEntWithComTempTable = {}
 ---Returns an entity ID with the specified components.  
 -- For multiple matching entities, the returned ID is arbitary.
 function Scene:getEntWithCom(...)
     c('rt')
+    util.clearTable(getEntWithComTempTable)
+    local classes = buildComClassList(self, getEntWithComTempTable, ...)
+    if not classes[1] then return end
+    if not self.com[classes[1]] then return end
     local entId, found, done
     while not found and not done do
-        entId = next(self.ents, entId)
+        entId = next(self.com[classes[1]], entId)
         done = not entId
-        for i=1, select('#',...) do
+        for i=2, #classes, 1 do
             if entId == nil then
                 found = false
                 break
             end
-            found = self:hasCom(entId, select(i,...))
+            found = self.com[classes[i]] and self.com[classes[i]][entId]
             if not found then
                 break
             end
@@ -663,14 +680,24 @@ end
 ---Checks if an entity ID has the specified components.
 function Scene:hasCom(id, ...)
     c('rt,rn|s')
-    if not self:entExists(id) then
-        return false
+    if not self._ents[id] then
+        return nil, ('Entity ID %s does not exist.'):format(id)
     end
-    local ent = self:getEnt(id)
-    for i=1, select('#',...) do
-        local comId = select(i,...)
-        if not ent[comId] then
-            return false
+    for i=1, select('#',...), 1 do
+        local class = select(i, ...)
+        local err
+        if type(class) == 'string' then
+            class, err = self.engine.currentContext:getComClass(class)
+            if not class then return nil, err end
+        elseif type(class) == 'table' then
+            --
+        else
+            return nil, ('expected string or table but got %s.'):format(type(class))
+        end
+        if self.com[class] and self.com[class][id] then
+            --
+        else
+            return false, ('missing component %s.'):format(class)
         end
     end
     return true
