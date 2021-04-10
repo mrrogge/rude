@@ -719,18 +719,6 @@ describe('an Engine instance:', function()
             e:mergeData(source, target)
             assert.is.equal(target.foo.bar.baz, 'bleh')
         end)
-        it('with convertToObjects true, converts source tables with __class to data objects', function()
-            local source = {v={__class='TestClass', x=1, y=2, z=3}}
-            local target = {}
-            e:mergeData(source, target, true)
-            assert.is.instanceOf(target.v, TestClass)
-        end)
-        it('with convertToObjects false, does not convert source tables with __class to data objects', function()
-            local source = {v={__class='TestClass', x=1, y=2, z=3}}
-            local target = {}
-            e:mergeData(source, target, false)
-            assert.is_not.instanceOf(target.v, TestClass)
-        end)
     end)
 
     describe('importData()', function()

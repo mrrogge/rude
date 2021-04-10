@@ -515,7 +515,7 @@ function Engine:mergeData(source, target, context)
             skip = true
         end
         -- ignore any keys that are prefixed with an underscore (flagged as private).
-        if string.find(k, '_') == 1 then
+        if not skip and string.find(k, '_') == 1 then
             skip = true
         end
         if not skip then

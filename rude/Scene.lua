@@ -433,7 +433,7 @@ function Scene:addEnt(source, id, context)
         for comId, comSource in pairs(source) do
             local class, err
             if type(comId) == 'string' then
-                class, err = context:getComClass(class)
+                class, err = context:getComClass(comId)
                 if not class then
                     print(err)
                 end
@@ -453,7 +453,7 @@ function Scene:addEnt(source, id, context)
         end
     end
     self._ents[id] = true
-    self.count = self.count + 1
+    self.entCount = self.entCount + 1
     self:emit('addedEnt', id)
     return id
 end
@@ -471,7 +471,7 @@ function Scene:removeEnt(id)
         self:removeCom(id, class)
     end
     self._ents[id] = nil
-    self.count = self.count - 1
+    self.entCount = self.entCount - 1
     self:emit('removedEnt', id)
     return self
 end
