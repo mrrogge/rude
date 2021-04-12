@@ -68,8 +68,6 @@ end
 ---Callback function that is called once when the game is loaded.
 function Engine:load(...)
     c('rt')
-    --Use the "nearest" graphics filter, looks a bit better than the default
-    love.graphics.setDefaultFilter('nearest', 'nearest', 0)
 end
 
 local function updateScenes(self, dt)
@@ -308,96 +306,6 @@ end
 
 --------------------------------------------------------------------------------
 
----Sets up the LOVE environment to use callback functions defined for this engine.
--- Any modifications made to the LOVE callbacks prior to calling attach() will be preserved.
-function Engine:attach()
-    c('rt')
-    self._initCallbacks.load = love.load
-    self._initCallbacks.update = love.update
-    self._initCallbacks.draw = love.draw
-    self._initCallbacks.keypressed = love.keypressed
-    self._initCallbacks.keyreleased = love.keyreleased
-    self._initCallbacks.mousemoved = love.mousemoved
-    self._initCallbacks.mousepressed = love.mousepressed
-    self._initCallbacks.mousereleased = love.mousereleased
-    self._initCallbacks.wheelmoved = love.wheelmoved
-    love.load = function(...)
-        if self._initCallbacks.load then
-            self._initCallbacks.load(...)
-        end
-        self:load(...)
-    end
-    love.update = function(dt)
-        c('rn')
-        if self._initCallbacks.update then
-            self._initCallbacks.update(dt)
-        end
-        self:update(dt)
-    end
-    love.draw = function()
-        if self._initCallbacks.draw then
-            self._initCallbacks.draw()
-        end
-        self:draw()
-    end
-    love.keypressed = function(key, scancode, isrepeat)
-        c('rs,rs,rb')
-        if self._initCallbacks.keypressed then
-            self._initCallbacks.keypressed(key, scancode, isrepeat)
-        end
-        self:keypressed(key, scancode, isrepeat)
-    end
-    love.keyreleased = function(key, scancode)
-        c('rs,rs')
-        if self._initCallbacks.keyreleased then
-            self._initCallbacks.keyreleased(key, scancode)
-        end
-        self:keyreleased(key, scancode)
-    end
-    love.mousemoved = function(x,y,dx,dy,istouch)
-        c('rn,rn,rn,rn,rb')
-        if self._initCallbacks.mousemoved then
-            self._initCallbacks.mousemoved(x,y,dx,dy,istouch)
-        end
-        self:mousemoved(x,y,dx,dy,istouch)
-    end
-    love.mousepressed = function(x,y,button,istouch,presses)
-        c('rn,rn,rn,rb,rn')
-        if self._initCallbacks.mousepressed then
-            self._initCallbacks.mousepressed(x,y,button,istouch,presses)
-        end
-        self:mousepressed(x,y,button,istouch,presses)
-    end
-    love.mousereleased = function(x,y,button,istouch,presses)
-        c('rn,rn,rn,rb,rn')
-        if self._initCallbacks.mousereleased then
-            self._initCallbacks.mousereleased(x,y,button,istouch,presses)
-        end
-        self:mousereleased(x,y,button,istouch,presses)
-    end
-    love.wheelmoved = function(x,y)
-        c('rn,rn')
-        if self._initCallbacks.wheelmoved then
-            self._initCallbacks.wheelmoved(x,y)
-        end
-        self:wheelmoved(x,y)
-    end
-    self._attached = true
-end
-
----Detaches the engine from the LOVE environment.
--- This resets all LOVE callbacks to their original functions. Does nothing if the engine is not currently attached.
-function Engine:detach()
-    c('rt')
-    if self._attached then
-        for k,v in pairs(self._initCallbacks) do
-            love[k] = v
-            self._initCallbacks[k] = nil
-        end
-        self._attached = false
-    end
-end
-
 ---loads a general plugin into this engine.  
 -- A plugin should be a function or callable table that accepts the engine as
 -- the first parameter. Additional parameters can be passed for plugin
@@ -468,6 +376,18 @@ function Engine:getFunction(id, context)
     c('rt,rs,t')
     context = context or self.currentContext
     return context:getFunction(id)
+end
+
+function Engine:registerAssetLoader(id, loader, context)
+    c('rt,rs,rf|t,t')
+    context = context or self.currentContext
+    return context:registerAssetLoader(id, loader)
+end
+
+function Engine:getAsset(loaderId, assetId, forceLoad, context)
+    c('rt,rs,ra,b,t')
+    context = context or self.currentContext
+    return context:getAsset(loaderId, assetId, forceLoad)
 end
 
 --------------------------------------------------------------------------------
