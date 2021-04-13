@@ -68,4 +68,13 @@ function DataContext:getAsset(loaderId, assetId, forceLoad)
     return self.assets[loader]
 end
 
+function DataContext:releaseAssets(loaderId)
+    contract('rt,rs')
+    if self.assets[loaderId] then
+        for k, v in pairs(self.assets[loaderId]) do
+            self.assets[loaderId][k] = nil
+        end
+    end
+end
+
 return DataContext
