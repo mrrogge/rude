@@ -8,6 +8,8 @@ function DataContext:initialize()
     self.com = {}
     self.classes = {}
     self.functions = {}
+    self.assets = {}
+    self.assetLoaders = {}
     return self
 end
 
@@ -46,6 +48,24 @@ function DataContext:getFunction(id)
         return nil, ('No function registered for ID "%s".'):format(id)
     end
     return fnc
+end
+
+function DataContext:registerAssetLoader(id, loader)
+    contract('rt,rs,rf|t')
+    self.assetLoaders[id] = loader
+    return self
+end
+
+function DataContext:getAsset(loaderId, assetId, forceLoad)
+    contract('rt,rs,rany,b')
+    self.assets[loaderId] = self.assets[loaderId] or {}
+    if forceLoad or self.assets[loaderId][assetId] == nil then
+        if not self.assetLoaders[loaderId] then
+            error(('No asset loader defined for ID %s'):format(loaderId))
+        end
+        self.assets[loaderId][assetId] = self.assetLoaders[loaderId](assetId)
+    end
+    return self.assets[loader]
 end
 
 return DataContext

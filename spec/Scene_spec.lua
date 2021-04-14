@@ -450,11 +450,6 @@ describe('a Scene instance', function()
             scene:addEnt(nil, 'test')
             assert.is.True(scene:entExists('test'))
         end)
-        it('when passed a source merges the data into the entity', function()
-            local source = {foo={}}
-            scene:addEnt(source)
-            assert.is.same({}, scene:getEnt(1).foo)
-        end)
     end)
 
     describe('removeEnt()', function()

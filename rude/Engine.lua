@@ -68,8 +68,6 @@ end
 ---Callback function that is called once when the game is loaded.
 function Engine:load(...)
     c('rt')
-    --Use the "nearest" graphics filter, looks a bit better than the default
-    love.graphics.setDefaultFilter('nearest', 'nearest', 0)
 end
 
 local function updateScenes(self, dt)
@@ -308,96 +306,6 @@ end
 
 --------------------------------------------------------------------------------
 
----Sets up the LOVE environment to use callback functions defined for this engine.
--- Any modifications made to the LOVE callbacks prior to calling attach() will be preserved.
-function Engine:attach()
-    c('rt')
-    self._initCallbacks.load = love.load
-    self._initCallbacks.update = love.update
-    self._initCallbacks.draw = love.draw
-    self._initCallbacks.keypressed = love.keypressed
-    self._initCallbacks.keyreleased = love.keyreleased
-    self._initCallbacks.mousemoved = love.mousemoved
-    self._initCallbacks.mousepressed = love.mousepressed
-    self._initCallbacks.mousereleased = love.mousereleased
-    self._initCallbacks.wheelmoved = love.wheelmoved
-    love.load = function(...)
-        if self._initCallbacks.load then
-            self._initCallbacks.load(...)
-        end
-        self:load(...)
-    end
-    love.update = function(dt)
-        c('rn')
-        if self._initCallbacks.update then
-            self._initCallbacks.update(dt)
-        end
-        self:update(dt)
-    end
-    love.draw = function()
-        if self._initCallbacks.draw then
-            self._initCallbacks.draw()
-        end
-        self:draw()
-    end
-    love.keypressed = function(key, scancode, isrepeat)
-        c('rs,rs,rb')
-        if self._initCallbacks.keypressed then
-            self._initCallbacks.keypressed(key, scancode, isrepeat)
-        end
-        self:keypressed(key, scancode, isrepeat)
-    end
-    love.keyreleased = function(key, scancode)
-        c('rs,rs')
-        if self._initCallbacks.keyreleased then
-            self._initCallbacks.keyreleased(key, scancode)
-        end
-        self:keyreleased(key, scancode)
-    end
-    love.mousemoved = function(x,y,dx,dy,istouch)
-        c('rn,rn,rn,rn,rb')
-        if self._initCallbacks.mousemoved then
-            self._initCallbacks.mousemoved(x,y,dx,dy,istouch)
-        end
-        self:mousemoved(x,y,dx,dy,istouch)
-    end
-    love.mousepressed = function(x,y,button,istouch,presses)
-        c('rn,rn,rn,rb,rn')
-        if self._initCallbacks.mousepressed then
-            self._initCallbacks.mousepressed(x,y,button,istouch,presses)
-        end
-        self:mousepressed(x,y,button,istouch,presses)
-    end
-    love.mousereleased = function(x,y,button,istouch,presses)
-        c('rn,rn,rn,rb,rn')
-        if self._initCallbacks.mousereleased then
-            self._initCallbacks.mousereleased(x,y,button,istouch,presses)
-        end
-        self:mousereleased(x,y,button,istouch,presses)
-    end
-    love.wheelmoved = function(x,y)
-        c('rn,rn')
-        if self._initCallbacks.wheelmoved then
-            self._initCallbacks.wheelmoved(x,y)
-        end
-        self:wheelmoved(x,y)
-    end
-    self._attached = true
-end
-
----Detaches the engine from the LOVE environment.
--- This resets all LOVE callbacks to their original functions. Does nothing if the engine is not currently attached.
-function Engine:detach()
-    c('rt')
-    if self._attached then
-        for k,v in pairs(self._initCallbacks) do
-            love[k] = v
-            self._initCallbacks[k] = nil
-        end
-        self._attached = false
-    end
-end
-
 ---loads a general plugin into this engine.  
 -- A plugin should be a function or callable table that accepts the engine as
 -- the first parameter. Additional parameters can be passed for plugin
@@ -417,6 +325,15 @@ end
 function Engine:useContext(context)
     c('rt,t')
     self.currentContext = context or self.dataContext
+    return self
+end
+
+function Engine:withContext(context, f, ...)
+    c('rt,t,rf|t')
+    local prevContext = self.currentContext
+    self:useContext(context)
+    f(...)
+    self:useContext(prevContext)
     return self
 end
 
@@ -461,117 +378,91 @@ function Engine:getFunction(id, context)
     return context:getFunction(id)
 end
 
+function Engine:registerAssetLoader(id, loader, context)
+    c('rt,rs,rf|t,t')
+    context = context or self.currentContext
+    return context:registerAssetLoader(id, loader)
+end
+
+function Engine:getAsset(loaderId, assetId, forceLoad, context)
+    c('rt,rs,ra,b,t')
+    context = context or self.currentContext
+    return context:getAsset(loaderId, assetId, forceLoad)
+end
+
 --------------------------------------------------------------------------------
 -- External Data Functions
 --------------------------------------------------------------------------------
-local function mergeData(engine, source, target)
-    c('rt,rany,rany')
-    
-end
-
----Merges data from a source table into a target table.
-function Engine:mergeData(source, target, convertToObjects)
-    --TODO: this needs a lot of cleanup
-    c('rt,rt,rt,b')
+function Engine:mergeData(source, target, context)
+    c('rt,rt,rt,t')
+    context = context or self.currentContext
     for k, v in pairs(source) do
         local skip = false
+        -- ignore any metatable lookup values, we only want data directly added to table
         if rawget(source, k) ~= v then
-            --ignore any metatable lookup values, we only want data directly
-            --added to table
             skip = true
         end
-        local keyIsData = type(k) == 'string' or type(k) == 'boolean' 
-            or type(k) == 'number'
-        if not skip and not keyIsData then
-            --key is not data
+        -- ignore any keys that are not primitive data types
+        local kType = type(k)
+        if kType == 'string' or kType == 'number' or kType == 'boolean' then
+            --
+        else
             skip = true
         end
-        if not skip and k == 'class' then
-            --middleclass objects will have a "class" field, ignore it
+        -- ignore the "class" field on object instances
+        if k == 'class' then
             skip = true
         end
-        if not skip and v == source then
-            --ignore any self-references. NOTE: this won't detect cycles between
-            --2 or more tables.
+        -- ignore any self-references to avoid cycles.
+        if v == source then
             skip = true
         end
-        local valIsData = type(v) == 'string' or type(v) == 'boolean'
-            or type(v) == 'number' or type(v) == 'table'
-        if not skip and not valIsData then
-            --ignore any non-data values
+        -- ignore any values that aren't primitive data types
+        local vType = type(v)
+        if vType == 'string' or vType == 'number' or vType == 'boolean'
+        or vType == 'table'
+        then
+            --
+        else
             skip = true
         end
-        if not skip and k == '__class' then
-            --data structures may have a "__class" metadata field defining its
-            --intended class name, ignore this
+        -- ignore __collectionClass and __collectionClasses which are used to identify lists of sub-objects in a given object.
+        if k == '__collectionClass' or k == '__collectionClasses' then
             skip = true
         end
-        if not skip and k == '__collectionClass' then
-            --data structures may have a "__collectionClass" metadata field 
-            --defining the class names of its sub-objects, ignore this
+        -- if the value has a subclasses attribute, then it is likely a class reference and should be ignored.
+        if vType == 'table' and v.subclasses then
             skip = true
         end
-        if not skip and k == '__collectionClasses' then
-            --similarly, ignore __collectionClasses
-            skip = true
-        end
-        if not skip and type(v) == 'table' and v.subclasses then
-            --classes will have a subclasses field, we want to ignore these
-            skip = true
-        end
+        -- ignore any keys that are prefixed with an underscore (flagged as private).
         if not skip and string.find(k, '_') == 1 then
-            --skip any keys that start with a "_", treat these as private
             skip = true
         end
         if not skip then
-            if type(v) == 'string' or type(v) == 'boolean' or type(v) == 'number' then
+            -- if v is not a table then just copy it into the target
+            if vType ~= 'table' then
                 target[k] = v
             else
-                --If the source table has a __class value, then this means the
-                --target should be made an instance of that class, rather than
-                --just a pure table.
-                local dataClassExists = v.__class 
-                    and type(v.__class) == 'string'
-                    and self:dataClassExists(v.__class)
-                if dataClassExists and convertToObjects then
-                    target[k] = target[k] or self:getDataClass(v.__class)()
-                end
+                -- source value is a table, therefore we want to merge data from this table into the target. Create a new table instance if one does not already exist.
                 target[k] = target[k] or {}
 
-                --If the target has a __collectionClasses value, then this can
-                --be used to determine which target tables should be collections
-                --of object instances rather than pure tables.
-                local targetColClassExists = target.__collectionClasses
-                    and type(target.__collectionClasses[k]) == 'string'
-                    and self:dataClassExists(target.__collectionClasses[k])
-                if targetColClassExists and convertToObjects then
+                -- if the target has a __collectionClasses value, then this can be used to determine which target tables should be collections of object instances rather than pure tables.
+                if target.__collectionClasses
+                and type(target.__collectionClasses[k]) == 'table'
+                and context.classes[target.__collectionClasses[k]]
+                then
                     for k2, v2 in pairs(v) do
                         target[k][k2] = target[k][k2]
-                            or self:getDataClass(target.__collectionClasses[k])()
-                        self:mergeData(v2, target[k][k2], convertToObjects)
+                            or context.classes[target.__collectionClasses[k]]()
+                        mergeData(self, v2, target[k][k2], context)
                     end
-                end
-
-                --If source has a __collectionClass value, this tells the
-                --function that every entry in this table should be an instance
-                --of that data class.
-                local sourceColClassExists = v.__collectionClass
-                    and type(v.__collectionClass) == 'string'
-                    and self:dataClassExists(v._collectionClass)
-                if not targetColClassExists and sourceColClassExists and convertToObjects then
-                    for k2, v2 in pairs(v) do
-                        target[k][k2] = target[k][k2] or self:getDataClass(v.__collectionClass)()
-                        self:mergeData(v2, target[k][k2], convertToObjects)
-                    end
-                end
-
-                --If neither of the above merge conditions apply, just merge normally.
-                if not convertToObjects or (not targetColClassExists and not sourceColClassExists) then
-                    self:mergeData(v, target[k], convertToObjects)
+                else
+                    -- merge tables normally
+                    self:mergeData(v, target[k], context)
                 end
             end
         end
-    end
+    end    
 end
 
 ---Imports a data source, e.g. from an external file.  
@@ -587,9 +478,9 @@ end
 -- or subtable has a "__class" entry, the resulting import will create an object
 -- of that class instead of the table. Some built-in examples are: vectors, 
 -- colors, timers.
-function Engine:importData(source)
+function Engine:importData(source, context)
     -- TODO: should make dkjson an optional dependency.
-    c('rt,rs')
+    c('rt,rs,t')
     if self._importCache[source] then
         return self._importCache[source]
     end
@@ -624,26 +515,22 @@ function Engine:importData(source)
     if type(data) ~= 'table' then
         error(('import error: source cannot be type %s'):format(type(data)))
     end
-    local dataClassExists = data.__class and type(data.__class) 
-        and self:dataClassExists(data.__class)
-    if dataClassExists then
-        target = self:getDataClass(data.__class)()
-    else
-        target = {}
-    end
-    self:mergeData(data, target, true)
+    context = context or self.currentContext
+    target = {}
+    self:mergeData(data, target, context)
     self._importCache[source] = target
     return target
 end
 
 local _jsonEncodeConfig = {indent=true}
 ---Exports a data source to an external file.
-function Engine:exportData(source, mode, format, fpath)
-    c('rt,rt,s,s,s')
+function Engine:exportData(source, mode, format, fpath, context)
+    c('rt,rt,s,s,s,t')
     mode = mode or 's'
     format = format or 'lua'
     local data = {}
-    self:mergeData(source, data, false)
+    context = context or self.currentContext
+    self:mergeData(source, data, context)
     local s
     if format == 'json' then
         s = dkjson.encode(data, _jsonEncodeConfig)
@@ -672,17 +559,8 @@ function Engine:importConfig(config)
     if type(config) == 'string' then
         config = self:importData(config)
     end
-    self:mergeData(config, self.config)
+    self:mergeData(config, self.config, self.currentContext)
     return self
 end
-
----Applies snapshot id to an object.
--- Snapshots are pre-defined sets of values that can be recalled for an object.
-function Engine:applySnapshot(object, id)
-    local snapshot = object.snapshots[id]
-    self:mergeData(snapshot, object)
-    return self
-end
-
 
 return Engine
