@@ -72,7 +72,7 @@ function DataContext:getAsset(loaderId, assetId, forceLoad)
     self.assets[loaderId] = self.assets[loaderId] or {}
     if forceLoad or self.assets[loaderId][assetId] == nil then
         if not self.assetLoaders[loaderId] then
-            error(('No asset loader defined for ID %s'):format(loaderId))
+            return nil, ('No asset loader defined for ID %s'):format(loaderId)
         end
         self.assets[loaderId][assetId] = self.assetLoaders[loaderId](assetId)
     end
