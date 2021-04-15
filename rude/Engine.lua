@@ -2,16 +2,17 @@
 --@classmod Engine
 
 local c = require('rude._contract')
-local dkjson = require('dkjson')
-local bitser = require('rude.lib.bitser')
 local alert = require('rude.alert')
 local assert = require('rude.assert')
+local bitserPlugin = require('rude.plugins.bitserPlugin')
 local DataContext = require('rude.DataContext')
+local dkjsonPlugin = require('rude.plugins.dkjsonPlugin')
 local EventEmitterMixin = require('rude.EventEmitterMixin')
-local graphics = require('rude.graphics')
+local lovePlugin = require('rude.plugins.lovePlugin')
 local PoolableMixin = require('rude.PoolableMixin')
 local RudeObject = require('rude.RudeObject')
 local Scene = require('rude.Scene')
+local stdPlugin = require('rude.plugins.stdPlugin')
 local Sys = require('rude.Sys')
 local TablePool = require('rude.TablePool')
 local util = require('rude.util')
@@ -28,7 +29,12 @@ function Engine:initialize(config)
     self.DataContext = DataContext
     self.Engine = Engine
     self.EventEmitterMixin = EventEmitterMixin
-    self.graphics = graphics
+    self.plugins = {
+        bitserPlugin=bitserPlugin,
+        dkjsonPlugin=dkjsonPlugin,
+        lovePlugin=lovePlugin,
+        stdPlugin=stdPlugin
+    }
     self.PoolableMixin = PoolableMixin
     self.RudeObject = RudeObject
     self.Scene = Scene
