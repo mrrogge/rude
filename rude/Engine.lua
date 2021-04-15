@@ -390,6 +390,18 @@ function Engine:getAsset(loaderId, assetId, forceLoad, context)
     return context:getAsset(loaderId, assetId, forceLoad)
 end
 
+function Engine:getDataDecoder(id, context)
+    c('rt,rs,t')
+    context = context or self.currentContext
+    return context:getDataDecoder(id)
+end
+
+function Engine:getDataEncoder(id, context)
+    c('rt,rs,t')
+    context = context or self.currentContext
+    return context:getDataEncoder(id)
+end
+
 --------------------------------------------------------------------------------
 -- External Data Functions
 --------------------------------------------------------------------------------
@@ -465,92 +477,48 @@ function Engine:mergeData(source, target, context)
     end    
 end
 
----Imports a data source, e.g. from an external file.  
--- Various types are supported: JSON, bitser binary data, external LUA files.  
--- Similar to require(), the results are cached for better performance when
--- importing the same source multiple times. If you plan on changing the import
--- source over time, you will need to use clearImportCache().  
--- Sources can be strings, file paths, or require-style paths (only if the file
--- is a LUA file).  
--- Note that any non-data values (e.g. functions, userdata) will be stripped out
--- of the cached result. The only exception is "data objects", which are
--- instances of special classes registered to the engine. When a source table 
--- or subtable has a "__class" entry, the resulting import will create an object
--- of that class instead of the table. Some built-in examples are: vectors, 
--- colors, timers.
-function Engine:importData(source, context)
-    -- TODO: should make dkjson an optional dependency.
-    c('rt,rs,t')
-    if self._importCache[source] then
-        return self._importCache[source]
-    end
-    local ok, s, data, target, err, _
-    --try to load source as a lua file path
-    ok, data = pcall(require, source)
-    if not ok then
-        --try to load source as a general file path
-        s = love.filesystem.read(source)
-        if not s then
-            --try to parse source as a JSON string
-            data, _, err = dkjson.decode(source)
-            if err then
-                --try to parse source as a binary string
-                ok, data = pcall(bitser.loads, source)
-                if not ok then
-                    error('import error: unknown source format.')
-                end
-            end
-        else
-            --try to parse the string as JSON
-            data, _, err = dkjson.decode(s)
-            if err then
-                --try to parse string as binary data
-                ok, data = pcall(bitser.loads, s)
-                if not ok then
-                    error('import error: unknown source format.')
-                end
-            end
-        end
-    end
-    if type(data) ~= 'table' then
-        error(('import error: source cannot be type %s'):format(type(data)))
-    end
+---Imports a data source, e.g. from an external file.
+-- decoderId is an ID to a registered data decoder function. source is the input value that will be passed to the decoder. context defines the DataContext for looking up the data decoder; when context is nil, the current context for the engine is used.
+-- This function decodes the source then runs it through mergeData(), resulting in a pure Lua data table. The result should be deterministic for a given decoder function (assuming that function is also deterministic), therefore we can cache the result for next time.
+-- The return value is either the decoded data or nil and an error message. Keep in mind the returned data is cached, so if you wish to use this data, e.g. for a component, you will need to run it through another mergeData() call to apply it to a target.
+function Engine:importData(decoderId, source, context)
+    c('rt,rs,rs,t')
     context = context or self.currentContext
-    target = {}
+    local result, err = context:getDataDecoder(decoderId)
+    if not result then
+        return nil, err
+    end
+    local decoder = result
+    if self._importCache[decoder] and self._importCache[decoder][source] then
+        return self._importCache[decoder][source]
+    end
+    result, err = decoder(source)
+    if not result then
+        return nil, err
+    end
+    local data = result
+    local target = {}
     self:mergeData(data, target, context)
-    self._importCache[source] = target
+    self._importCache[decoder] = self._importCache[decoder] or {}
+    self._importCache[decoder][source] = target
     return target
 end
 
-local _jsonEncodeConfig = {indent=true}
----Exports a data source to an external file.
-function Engine:exportData(source, mode, format, fpath, context)
-    c('rt,rt,s,s,s,t')
-    mode = mode or 's'
-    format = format or 'lua'
-    local data = {}
+---Encodes a lua table into a format based on the encoderId, either resulting in a string or writing out to an external file.
+local exportDataTempTable = {}
+function Engine:exportData(encoderId, source, path, context)
+    c('rt,rs,rt,s,t')
     context = context or self.currentContext
-    self:mergeData(source, data, context)
-    local s
-    if format == 'json' then
-        s = dkjson.encode(data, _jsonEncodeConfig)
-    elseif format == 'bin' then
-        s = bitser.dumps(data)
-    elseif format == 'lua' then
-        s = util.serializeToLua(data)
-    else
-        error(('bad argument: format cannot be %s'):format(format))
+    for k,v in pairs(exportDataTempTable) do
+        exportDataTempTable[k] = nil
     end
-    if mode == 'f' then
-        if not fpath then
-            error('fpath must be specified.')
-        end
-        love.filesystem.write(fpath, s)
-    elseif mode == 's' then
-        return s
-    else
-        error(('bad argument: mode cannot be %s'):format(mode))
+    self:mergeData(source, exportDataTempTable, context)
+    local result, err = self:getDataEncoder(encoderId)
+    if not result then
+        return nil, err
     end
+    local encoder = result
+    return encoder(exportDataTempTable, path)
 end
 
 ---Import configuration data for the engine.
