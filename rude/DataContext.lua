@@ -97,12 +97,28 @@ function DataContext:registerDataDecoder(id, decoder)
     return self
 end
 
+function DataContext:getDataDecoder(id)
+    contract('rt,rs')
+    if not self.dataDecoders[id] then
+        return nil, ('No data decoder registered for ID %s.'):format(id)
+    end
+    return self.dataDecoders[id]
+end
+
 ---Registers a data encoder to a given id.
 -- Data encoders are functions that accept an input and an optional string path. If path is not specified, encoders should return a string representation of the input. If path is specified, then the string value is written out to an external file at path. These are used by Engine:exportData() to write data out from the engine.
 function DataContext:registerDataEncoder(id, encoder)
     contract('rt,rs,rf|t')
     self.dataEncoders[id] = encoder
     return self
+end
+
+function DataContext:getDataEncoder(id)
+    contract('rt,rs')
+    if not self.dataEncoders[id] then
+        return nil, ('No data encoder registered for ID %s.'):format(id)
+    end
+    return self.dataEncoders[id]
 end
 
 return DataContext
