@@ -11,7 +11,18 @@ local requireDecoder = function(input)
     return result
 end
 
--- TODO: write a decoder for a lua string, probably using loadstring().
+local luaStringDecoder = function(input)
+    local result, err = loadstring(input)
+    if not result then
+        return nil, err
+    end
+    local f = result
+    result, err = pcall(f)
+    if not result then
+        return nil, err
+    end
+    return result
+end
 
 local luaStringEncoder = function(input, path)
     local result, err = pcall(util.serializeToLua, input)
@@ -36,6 +47,7 @@ end
 
 local plugin = function(engine, context)
     engine:registerDataDecoder('require', requireDecoder, context)
+    engine:registerDataDecoder('lua-string', luaStringDecoder, context)
     engine:registerDataEncoder('lua', luaStringEncoder, context)
 end
 
