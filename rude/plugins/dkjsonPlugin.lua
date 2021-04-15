@@ -1,7 +1,9 @@
+local jsonFound, json = pcall(require, 'dkjson')
+
 local encoderState = {indent=true}
 
 local function stringDecoder(input)
-    local ret1, ret2, ret3 = dkjson.decode(input)
+    local ret1, ret2, ret3 = json.decode(input)
     if ret1 then
         return ret1
     else
@@ -14,7 +16,7 @@ local function loveFileDecoder(path)
     if not s then
         return nil, err
     end
-    local ret1, ret2, ret3 = dkjson.decode(s)
+    local ret1, ret2, ret3 = json.decode(s)
     if ret1 then
         return ret1
     else
@@ -23,7 +25,7 @@ local function loveFileDecoder(path)
 end
 
 local function encoder(input, path)
-    local s, err = pcall(dkjson.encode, input, encoderState)
+    local s, err = pcall(json.encode, input, encoderState)
     if not s then
         return nil, err
     end
@@ -45,7 +47,9 @@ local function encoder(input, path)
 end
 
 return function(engine, context)
-    local dkjson = require('dkjson')
+    if not jsonFound then
+        error('This plugin requires the dkjson module to run correctly.')
+    end
     engine:registerDataDecoder('dkjson-string', stringDecoder, context)
     engine:registerDataEncoder('dkjson', encoder, context)
     if love then
