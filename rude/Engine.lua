@@ -64,6 +64,8 @@ function Engine:initialize(config)
 
     self._importCache = {}
 
+    self:usePlugin(stdPlugin)
+
     return self
 end
 
@@ -396,10 +398,20 @@ function Engine:getAsset(loaderId, assetId, forceLoad, context)
     return context:getAsset(loaderId, assetId, forceLoad)
 end
 
+function Engine:registerDataDecoder(id, decoder, context)
+    context = context or self.currentContext
+    return context:registerDataDecoder(id, decoder)
+end
+
 function Engine:getDataDecoder(id, context)
     c('rt,rs,t')
     context = context or self.currentContext
     return context:getDataDecoder(id)
+end
+
+function Engine:registerDataEncoder(id, encoder, context)
+    context = context or self.currentContext
+    return context:registerDataEncoder(id, encoder)
 end
 
 function Engine:getDataEncoder(id, context)

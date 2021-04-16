@@ -10,6 +10,8 @@ function DataContext:initialize()
     self.functions = {}
     self.assets = {}
     self.assetLoaders = {}
+    self.dataDecoders = {}
+    self.dataEncoders = {}
     return self
 end
 
