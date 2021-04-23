@@ -3,7 +3,8 @@
 --@classmod Scene
 
 local c = require('rude._contract')
-
+local Exception = require('rude.Exception')
+local MissingComClassException = require('rude.MissingComClassException')
 local EventEmitterMixin = require('rude.EventEmitterMixin')
 local alert = require('rude.alert')
 local assert = require('rude.assert')
@@ -23,12 +24,11 @@ function Scene:initialize(engine, config)
     end
 
     --entity/component stuff
-    self._ents = {}
     self.com = {}
-    self.entCount = 0
     self.tags = {}
     self._hasComIterCache = {}
     self._tagIterCache = {}
+    self._nextEntId = 1
 
     self._startState = 'starting'
     self._pauseState = 'paused'
@@ -408,22 +408,29 @@ end
 --|-----------------------------------------------------------------------------
 --| Entity/component handling functions
 --|-----------------------------------------------------------------------------
-local function alertNoEnt(entId)
-    alert(('Entity ID %s does not exist'):format(entId), 'warning')
-end
+---Returns a new, unused numeric ID for an entity.
+-- This number is always one higher than the previous highest known ID in use. Numbers are not backfilled, e.g. if only one entity with ID 1234 exists, the next value will be 1235 (not 1).
 
 ---Adds a new entity to the scene. 
--- If id is nil, the next available id number will be used. 
--- source can be either a data table, a require path that resolves to a data table, or an importable file path that resolves to a data table.
+-- If id is nil, a new, unused numeric ID is generated.
+-- source can be either a data table or a string corresponding to an importable object.
 -- context can be a DataContext object. If nil, the engine's current context will be used.
 -- The keys in the source data table can be either component classes or string IDs registered to classes in context. The values can be data that will be merged into component instances.
---Returns the id of the new entity if successful, otherwise returns nil and an error message.
+-- If trying to add an entity ID that already has components associated with it, any new components will be added. Existing components will not be overwritten or merged, and a warning will be raised. It is recommended to only use addEnt with brand-new entities.
+-- Each added component will trigger the addedCom event. The order in which components are added is undefined.
+-- If successful, the new entity id is returned. If a problem occurred, either the id or nil is returned, followed by an error message.
 function Scene:addEnt(source, id, context)
     c('rt,t|s,n|s,t')
     context = context or self.engine.currentContext
-    id = id or util.nextIdx(self._ents)
-    if self._ents[id] then
-        return nil, ('Entity ID %s already exists; either remove the existing entity or use a different ID.'):format(id)
+    if not id then
+        id = self._nextEntId
+        self._nextEntId = self._nextEntId + 1
+    else
+        if type(id) == 'number' then
+            if id >= self._nextEntId then
+                self._nextEntId = id + 1
+            end
+        end
     end
     if type(source) == 'string' then
         source = self.engine:importData(source, context)
@@ -434,26 +441,20 @@ function Scene:addEnt(source, id, context)
             local class, err
             if type(comId) == 'string' then
                 class, err = context:getComClass(comId)
-                if not class then
-                    print(err)
-                end
+                if not class then print(err) end
             elseif type(comId) == 'table' then
                 class = comId
             else
-                class, err = nil, ('While adding entity %s: comId cannot be type %s.'):format(id, type(comId))
+                class, err = nil, Exception(('While adding entity %s: comId cannot be type %s.'):format(id, type(comId)))
+                print(err)
             end
             if class then
                 self.com[class] = self.com[class] or {}
-                if self.com[class][id] then
-                    return nil, ('Unexpected component %s already existing for entity %s.'):format(class, id)
-                end
-                self.com[class][id] = class()
-                self.engine:mergeData(comSource, self.com[class][id], context)
+                local com, err = self:addCom(id, class, comSource)
+                if not com then print(err) end
             end
         end
     end
-    self._ents[id] = true
-    self.entCount = self.entCount + 1
     self:emit('addedEnt', id)
     return id
 end
@@ -461,17 +462,11 @@ end
 ---Removes an entity from the scene.
 function Scene:removeEnt(id)
     c('rt,rn|s')
-    if not self._ents[id] then
-        print(('Entity ID %s does not exist, could not remove.'):format(id))
-        return self
-    end
     self:emit('removingEnt', id)
     --remove all components for this entity
     for class, coms in pairs(self.com) do
         self:removeCom(id, class)
     end
-    self._ents[id] = nil
-    self.entCount = self.entCount - 1
     self:emit('removedEnt', id)
     return self
 end
@@ -481,17 +476,10 @@ function Scene:removeEntDelayed(id)
     table.insert(self.removedEnts, id)
 end
 
----Checks if an entity exists for a given ID.
-function Scene:entExists(id)
-    c('rt,rn|s')
-    return not not self._ents[id]
-end
-
 ---Builds a new component and adds it to an entity.
--- Returns the new component table.
+-- Returns the new component table, otherwise returns nil and an exception.
 function Scene:addCom(entId, class, source, context)
     c('rt,rn|s,rt|s,t|s,t')
-    source = source or util.emptyTable
     context = context or self.engine.currentContext
     if type(source) == 'string' then
         source = self.engine:importData(source, context)
@@ -502,10 +490,14 @@ function Scene:addCom(entId, class, source, context)
     end
     self.com[class] = self.com[class] or {}
     if self.com[class][entId] then
-        return nil, ('Component %s already exists for entity %s.'):format(class, entId)
+        return nil, Exception(('Component %s already exists for entity %s.'):format(class, entId))
     end
+    self:emit('addingCom', entId, class)
     self.com[class][entId] = class()
-    self.engine:mergeData(source, self.com[class][entId], context)
+    if source then
+        self.engine:mergeData(source, self.com[class][entId], context)
+    end
+    self:emit('addedCom', entId, class)
     return self.com[class][entId]
 end
 
@@ -518,17 +510,17 @@ function Scene:removeCom(entId, class, context)
         if not class then return nil, err end
     end
     if self.com[class] and self.com[class][entId] then
+        self:emit('removingCom', entId, class)
         if self.com[class][entId].destroy then
             self.com[class][entId]:destroy()
         end
         self.com[class][entId] = nil
+        self:emit('removedCom', entId, class)
     end
     return self
 end
 
----Returns an entity's component with the given comId.  
--- If component or entity does not exist, an error will be raised. To test if a component
--- exists or not, use hasCom().
+---Returns an entity's component with the given class.
 function Scene:getCom(entId, class, context)
     c('rt,rn|s,rt|s,t')
     context = context or self.engine.currentContext
@@ -538,20 +530,9 @@ function Scene:getCom(entId, class, context)
     end
     local com = self.com[class] and self.com[class][entId]
     if not com then
-        return nil, ('No component of class %s exists for entity %s.'):format(class, entId)
+        return nil, MissingComException(entId, class)
     end
     return com
-end
-
----Returns an iterator that yields entity IDs for the scene.
-function Scene:entIter()
-    c('rt')
-    local id = nil
-    return function()
-        local val
-        id, val = next(self._ents, id)
-        return id, val
-    end
 end
 
 local buildHasComIterKeyTemp = {}
@@ -680,9 +661,6 @@ end
 ---Checks if an entity ID has the specified components.
 function Scene:hasCom(id, ...)
     c('rt,rn|s')
-    if not self._ents[id] then
-        return nil, ('Entity ID %s does not exist.'):format(id)
-    end
     for i=1, select('#',...), 1 do
         local class = select(i, ...)
         local err
@@ -692,12 +670,12 @@ function Scene:hasCom(id, ...)
         elseif type(class) == 'table' then
             --
         else
-            return nil, ('expected string or table but got %s.'):format(type(class))
+            return nil, Exception(('expected string or table but got %s.'):format(type(class)))
         end
         if self.com[class] and self.com[class][id] then
             --
         else
-            return false, ('missing component %s.'):format(class)
+            return false
         end
     end
     return true
@@ -734,9 +712,6 @@ end
 ---Checks if an entity ID is tagged with the specified tags.
 function Scene:isEntTagged(id, ...)
     c('rt,rn|s')
-    if not self:entExists(id) then return 
-        nil, ('entity ID %s does not exist.'):format(id)
-    end
     for i=1, select('#',...) do
         local tag = select(i,...)
         if not self.tags[tag] then return false end

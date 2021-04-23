@@ -1,5 +1,7 @@
 local contract = require('rude._contract')
 local RudeObject = require('rude.RudeObject')
+local Exception = require('rude.Exception')
+local MissingComClassException = require('rude.MissingComClassException')
 
 local DataContext = RudeObject:subclass('DataContext')
 
@@ -24,7 +26,7 @@ function DataContext:getComClass(id)
     contract('rt,rs')
     local class = self.com[id]
     if not class then
-        return nil, ('No component class registered for ID "%s".'):format(id)
+        return nil, MissingComClassException(id)
     end
     return class
 end
@@ -45,7 +47,7 @@ function DataContext:getFunction(id)
     contract('rt,rs')
     local fnc = self.functions[id]
     if not fnc then
-        return nil, ('No function registered for ID "%s".'):format(id)
+        return nil, Exception(('No function registered for ID "%s".'):format(id))
     end
     return fnc
 end
@@ -61,7 +63,7 @@ function DataContext:getAsset(loaderId, assetId, forceLoad)
     self.assets[loaderId] = self.assets[loaderId] or {}
     if forceLoad or self.assets[loaderId][assetId] == nil then
         if not self.assetLoaders[loaderId] then
-            error(('No asset loader defined for ID %s'):format(loaderId))
+            return nil, Exception(('No asset loader defined for ID %s'):format(loaderId))
         end
         self.assets[loaderId][assetId] = self.assetLoaders[loaderId](assetId)
     end
