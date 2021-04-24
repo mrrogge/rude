@@ -1,5 +1,5 @@
---- Create alerts.
--- Alerts are notifications that allow customized behavior at runtime. You can configure alerts to print to a console, raise an error, run a custom function, or do nothing.
+--- Manage alerts.
+-- Alerts are customized notifications  that allow customized behavior at runtime. You can configure alerts to print to a console, raise an error, run a custom function, or do nothing.
 --  
 -- During development, you can use alerts to log interesting events to the console. Then for production builds, you can change the configuration so that all alerts do nothing.
 --  
@@ -20,79 +20,84 @@
 -- TODO: in a future version, it would be nice to combine the features of alerts and asserts together. Both have related intentions, and it would be cleaner to have just one mechanism that checks conditions and allows custom behavior functions.
 
 local c = require('rude._contract')
-
-local function ignore(msg) end
-
-local function print_(msg)
-    c('rs')
-    print(('ALERT: %s'):format(msg))
-end
-
-local function getHandler(handler)
-    c('rf|s')
-    if type(handler) == 'function' then
-        return handler
-    end
-    if handler == 'print' then
-        return print_
-    elseif handler == 'error' then
-        return error
-    elseif handler == 'ignore' then
-        return ignore
-    else
-        error('unknown alert handler: '..handler)
-    end
-end
+local RudeObject = require('rude.RudeObject')
 
 local alert = {
-    classes={
-        fatal='error',
-        warning='print',
-        info='ignore',
-        default='print'
-    },
-    handlers={
-        error=error,
-        print=print_,
-        ignore=ignore
-    }
+    _defs={},
+    _mode='print'
 }
 
----Registers a handler function.
--- Replaces the current handler if one already exists.
-function alert.registerHandler(id, handler)
-    c('rn|s,f')
-    alert.handlers[id] = handler
+local AlertDef = RudeObject:subclass('AlertDef')
+
+function AlertDef:initialize(options)
+    c('rt,t')
+    self.msg = options.msg or ''
+    --mode: 'error'|'print'|'log'|'ignore'|'global'
+    self.mode = options.mode or 'global'
+    return self
 end
 
----Registers an alert class and sets its handler ID.
-function alert.registerClass(clsId, handlerId)
-    c('rn|s,n|s')
-    alert.classes[clsId] = handlerId
+function AlertDef:raise(options)
+    local msg = options.msg or self.msg
+    local mode = options.mode or self.mode
+    local fmsg
+    if options.params then
+        local ok, ret = pcall(msg:format, unpack(options.params))
+        if ok then
+            fmsg = ret
+        else
+            fmsg = msg
+    else
+        fmsg = msg
+    end
+    fmsg = 'ALERT: '..fmsg
+    if mode == 'global' then
+        mode = alert._mode
+    end
+    if mode == 'error' then
+        error(fmsg)
+    elseif mode == 'print' then
+        print(fmsg)
+    elseif mode == 'log' then
+        --TODO
+    elseif mode == 'ignore' then
+        --
+    else
+        --
+    end
+end
+
+local defaultAlertDef = AlertDef({msg='UNDEFINED'})
+
+function alert.register(id, options)
+    c('rs|n,t')
+    alert._defs[id] = alert._defs[id] or AlertDef()
+    alert._defs[id]:initialize(options)
 end
 
 ---Raises an alert.
-function alert.raise(msg, clsId, ...)
-    c('s,n|s')
-    msg = msg or 'something happened'
-    clsId = clsId or 'default'
-    local handlerId = alert.classes[clsId]
-    if not handlerId then
-        error(('No handler exists for alert class "%s"'):format(clsId))
+-- If id is an alert ID, then the corresponding registered alert is raised. The options table override any of the registered alert settings, e.g. mode.
+-- If id is a table, then a custom alert will be raised based on the option values in that table (in this case the second options parameter is ignored).
+function alert.raise(id, options)
+    c('rs|n|t,t')
+    local alertDef
+    if type(id) == 'table' then
+        alertDef = AlertDef()
+    else
+        alertDef = alert._defs[id]
+        if not alertDef then
+            alertDef = defaultAlertDef
+        end
     end
-    local handler = alert.handlers[handlerId]
-    if not handler then
-        error(('Alert handler "%s" does not exist.'):format(handlerId))
-    end
-    handler(msg, ...)
+    t:raise
 end
 
 --- Alias for raise().
 -- @function __call
 -- @see raise
 setmetatable(alert, {
-    __call=function(t, msg, cls, ...)
-        return t.raise(msg, cls, ...)
+    __call=function(t, id, ...)
+        return t.raise(id, ...)
     end
 })
 
