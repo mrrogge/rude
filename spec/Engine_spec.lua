@@ -1,7 +1,6 @@
 local class = require('middleclass')
 local Engine = require('rude.Engine')
 local Scene = require('rude.Scene')
-local bitser = require('rude.lib.bitser')
 
 describe('an Engine instance:', function()
     local e
@@ -13,7 +12,6 @@ describe('an Engine instance:', function()
         assert.is.equal(e.assert, require('rude.assert'))
         assert.is.equal(e.Engine, require('rude.Engine'))
         assert.is.equal(e.EventEmitterMixin, require('rude.EventEmitterMixin'))
-        assert.is.equal(e.graphics, require('rude.graphics'))
         assert.is.equal(e.PoolableMixin, require('rude.PoolableMixin'))
         assert.is.equal(e.RudeObject, require('rude.RudeObject'))
         assert.is.equal(e.Scene, require('rude.Scene'))
@@ -358,216 +356,6 @@ describe('an Engine instance:', function()
         end)
     end)
 
-    describe('attach()', function()
-        it('allows engine callbacks to be called from LOVE callbacks', function()
-            local e = Engine()
-            e:pushScene(Scene(e))
-            e:attach()
-
-            spy.on(e, 'load')
-            love.load()
-            assert.spy(e.load).was.called()
-            e.load:revert()
-
-            spy.on(e, 'update')
-            love.update(1)
-            assert.spy(e.update).was.called()
-            e.update:revert()
-
-            spy.on(e, 'draw')
-            love.draw()
-            assert.spy(e.draw).was.called()
-            e.draw:revert()
-
-            spy.on(e, 'keypressed')
-            love.keypressed('','',false)
-            assert.spy(e.keypressed).was.called()
-            e.keypressed:revert()
-
-            spy.on(e, 'keyreleased')
-            love.keyreleased('','')
-            assert.spy(e.keyreleased).was.called()
-            e.keyreleased:revert()
-
-            spy.on(e, 'mousemoved')
-            love.mousemoved(0,0,0,0,false)
-            assert.spy(e.mousemoved).was.called()
-            e.mousemoved:revert()
-
-            spy.on(e, 'mousepressed')
-            love.mousepressed(0,0,0,false,1)
-            assert.spy(e.mousepressed).was.called()
-            e.mousepressed:revert()
-            
-            spy.on(e, 'mousereleased')
-            love.mousereleased(0,0,0,false,1)
-            assert.spy(e.mousereleased).was.called()
-            e.mousereleased:revert()
-
-            spy.on(e, 'wheelmoved')
-            love.wheelmoved(0,0)
-            assert.spy(e.wheelmoved).was.called()
-            e.wheelmoved:revert()
-        end)
-        it('once complete, original LOVE callbacks are still called', function()
-            local e = Engine()
-            e:pushScene(Scene(e))
-            local initCallbacks = {
-                load=spy.on(love, 'load'),
-                update=spy.on(love, 'update'),
-                draw=spy.on(love, 'draw'),
-                keypressed=spy.on(love, 'keypressed'),
-                keyreleased=spy.on(love, 'keyreleased'),
-                mousemoved=spy.on(love, 'mousemoved'),
-                mousepressed=spy.on(love, 'mousepressed'),
-                mousereleased=spy.on(love, 'mousereleased'),
-                wheelmoved=spy.on(love, 'wheelmoved')
-            }
-            e:attach()
-
-            love.load()
-            assert.spy(initCallbacks.load).was.called()
-            initCallbacks.load:revert()
-
-            love.update(1)
-            assert.spy(initCallbacks.update).was.called()
-            initCallbacks.update:revert()
-
-            love.draw()
-            assert.spy(initCallbacks.draw).was.called()
-            initCallbacks.draw:revert()
-
-            love.keypressed('','',false)
-            assert.spy(initCallbacks.keypressed).was.called()
-            initCallbacks.keypressed:revert()
-
-            love.keyreleased('','')
-            assert.spy(initCallbacks.keyreleased).was.called()
-            initCallbacks.keyreleased:revert()
-
-            love.mousemoved(0,0,0,0,false)
-            assert.spy(initCallbacks.mousemoved).was.called()
-            initCallbacks.mousemoved:revert()
-
-            love.mousepressed(0,0,0,false,1)
-            assert.spy(initCallbacks.mousepressed).was.called()
-            initCallbacks.mousepressed:revert()
-
-            love.mousereleased(0,0,0,false,1)
-            assert.spy(initCallbacks.mousereleased).was.called()
-            initCallbacks.mousereleased:revert()
-
-            love.wheelmoved(0,0)
-            assert.spy(initCallbacks.wheelmoved).was.called()
-            initCallbacks.wheelmoved:revert()
-        end)
-    end)
-
-    describe('detach()', function()
-        it('prevents engine callbacks from being called through LOVE', function()
-            local e = Engine()
-            e:attach()
-            e:detach()
-
-            spy.on(e, 'load')
-            love.load()
-            assert.spy(e.load).was_not.called()
-            e.load:revert()
-
-            spy.on(e, 'update')
-            love.update(1)
-            assert.spy(e.update).was_not.called()
-            e.update:revert()
-
-            spy.on(e, 'draw')
-            love.draw()
-            assert.spy(e.draw).was_not.called()
-            e.draw:revert()
-
-            spy.on(e, 'keypressed')
-            love.keypressed('','',false)
-            assert.spy(e.keypressed).was_not.called()
-            e.keypressed:revert()
-
-            spy.on(e, 'keyreleased')
-            love.keyreleased('','')
-            assert.spy(e.keyreleased).was_not.called()
-            e.keyreleased:revert()
-            
-            spy.on(e, 'mousemoved')
-            love.mousemoved(0,0,0,0,false)
-            assert.spy(e.mousemoved).was_not.called()
-            e.mousemoved:revert()
-
-            spy.on(e, 'mousepressed')
-            love.mousepressed(0,0,0,false,1)
-            assert.spy(e.mousepressed).was_not.called()
-            e.mousepressed:revert()
-
-            spy.on(e, 'mousereleased')
-            love.mousereleased(0,0,0,false,1)
-            assert.spy(e.mousereleased).was_not.called()
-            e.mousereleased:revert()
-
-            spy.on(e, 'wheelmoved')
-            love.wheelmoved(0,0)
-            assert.spy(e.wheelmoved).was_not.called()
-            e.wheelmoved:revert()
-        end)
-        it('allows original LOVE callbacks to be called', function()
-            local e = Engine()
-            local initCallbacks = {
-                load=spy.on(love, 'load'),
-                update=spy.on(love, 'update'),
-                draw=spy.on(love, 'draw'),
-                keypressed=spy.on(love, 'keypressed'),
-                keyreleased=spy.on(love, 'keyreleased'),
-                mousemoved=spy.on(love, 'mousemoved'),
-                mousepressed=spy.on(love, 'mousepressed'),
-                mousereleased=spy.on(love, 'mousereleased'),
-                wheelmoved=spy.on(love, 'wheelmoved')
-            }
-            e:attach()
-            e:detach()
-            
-            love.load()
-            assert.spy(initCallbacks.load).was.called()
-            initCallbacks.load:revert()
-
-            love.update(1)
-            assert.spy(initCallbacks.update).was.called()
-            initCallbacks.update:revert()
-
-            love.draw()
-            assert.spy(initCallbacks.draw).was.called()
-            initCallbacks.draw:revert()
-
-            love.keypressed('','',false)
-            assert.spy(initCallbacks.keypressed).was.called()
-            initCallbacks.keypressed:revert()
-
-            love.keyreleased('','')
-            assert.spy(initCallbacks.keyreleased).was.called()
-            initCallbacks.keyreleased:revert()      
-            
-            love.mousemoved(0,0,0,0,false)
-            assert.spy(initCallbacks.mousemoved).was.called()
-            initCallbacks.mousemoved:revert()
-
-            love.mousepressed(0,0,0,false,1)
-            assert.spy(initCallbacks.mousepressed).was.called()
-            initCallbacks.mousepressed:revert()
-
-            love.mousereleased(0,0,0,false,1)
-            assert.spy(initCallbacks.mousereleased).was.called()
-            initCallbacks.mousereleased:revert()
-
-            love.wheelmoved(0,0)
-            assert.spy(initCallbacks.wheelmoved).was.called()
-            initCallbacks.wheelmoved:revert()
-        end)
-    end)
-
     describe('usePlugin()', function()
         it('applies plugin to the engine', function()
             local plugin = function(engine)
@@ -718,40 +506,6 @@ describe('an Engine instance:', function()
             local target = {}
             e:mergeData(source, target)
             assert.is.equal(target.foo.bar.baz, 'bleh')
-        end)
-    end)
-
-    describe('importData()', function()
-        it('imports JSON strings', function()
-            local result = e:importData('{"foo": "bar"}')
-            assert.is.equal(result.foo, 'bar')
-        end)
-        it('imports bitser binary data', function()
-            local t = {foo='bar'}
-            local data = bitser.dumps(t)
-            local result = e:importData(data)
-            assert.is.equal(result.foo, 'bar')
-        end)
-        --TODO: should have a better way to mock the love calls, so that we
-        --could check the file read logic paths.
-    end)
-
-    describe('exportData()', function()
-        it('exports lua strings', function()
-            local source = {foo='bar'}
-            local result = e:exportData(source, 's', 'lua')
-            assert.is.equal(result, 'return {\n  ["foo"] = "bar",\n}\n')
-        end)
-        it('exports json strings', function()
-            local source = {foo='bar'}
-            local result = e:exportData(source, 's', 'json')
-            assert.is.equal(result, '{\n  "foo":"bar"\n}')
-        end)
-        it('exports bitser binary strings', function()
-            local source = {foo='bar'}
-            local result = e:exportData(source, 's', 'bin')
-            local result = bitser.loads(result)
-            assert.is.same(source, result)
         end)
     end)
 

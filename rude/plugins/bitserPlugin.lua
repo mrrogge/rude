@@ -33,6 +33,7 @@ local function bitserEncoder(input, path)
             ok, result = pcall(bitser.dumpLoveFile, path, input)
         else
             return nil, 'LOVE2D not found.'
+        end
     else
         ok, result = pcall(bitser.dumps, input)
     end
