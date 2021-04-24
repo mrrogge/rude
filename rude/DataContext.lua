@@ -2,6 +2,7 @@ local contract = require('rude._contract')
 local RudeObject = require('rude.RudeObject')
 local Exception = require('rude.Exception')
 local MissingComClassException = require('rude.MissingComClassException')
+local log = require('rude.log')
 
 local DataContext = RudeObject:subclass('DataContext')
 
@@ -12,6 +13,8 @@ function DataContext:initialize()
     self.functions = {}
     self.assets = {}
     self.assetLoaders = {}
+    self.loggers = {}
+    self.currentLogger = nil
     return self
 end
 
@@ -68,6 +71,20 @@ function DataContext:getAsset(loaderId, assetId, forceLoad)
         self.assets[loaderId][assetId] = self.assetLoaders[loaderId](assetId)
     end
     return self.assets[loader]
+end
+
+function DataContext:registerLogger(id, fnc, minSeverity)
+    self.loggers[id] = log.Logger(fnc, minSeverity)
+    return self.loggers[id]
+end
+
+function DataContext:log(id, payload, ...)
+    if self.loggers[id] then
+        self.loggers[id]:log(payload, ...)
+    else
+        return nil, Exception(('No logger defined for ID %s.'):format(id))
+    end
+    return true
 end
 
 return DataContext
