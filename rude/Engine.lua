@@ -4,11 +4,11 @@
 local c = require('rude._contract')
 local dkjson = require('dkjson')
 local bitser = require('rude.lib.bitser')
-local alert = require('rude.alert')
 local assert = require('rude.assert')
 local DataContext = require('rude.DataContext')
 local EventEmitterMixin = require('rude.EventEmitterMixin')
 local graphics = require('rude.graphics')
+local log = require('rude.log')
 local PoolableMixin = require('rude.PoolableMixin')
 local RudeObject = require('rude.RudeObject')
 local Scene = require('rude.Scene')
@@ -23,7 +23,6 @@ Engine:include(EventEmitterMixin)
 function Engine:initialize(config)
     c('rt,t|s')
     -- expose the public rude modules to make access easier.
-    self.alert = alert
     self.assert = assert
     self.DataContext = DataContext
     self.Engine = Engine
@@ -260,7 +259,7 @@ function Engine:pushScene(scene)
         scene = self._scenes[id]
     end
     if not scene then
-        alert(tostring(id)..' is not a registered scene ID.', 'warning')
+        self.log(Exception(tostring(id)..' is not a registered scene ID.'))
         return
     end
     table.insert(self._sceneStack, scene)
@@ -298,7 +297,7 @@ function Engine:swapScene(scene)
     end
     local old = self:popScene()
     if not scene then
-        alert(tostring(id)..' is not a registered scene ID.', 'warning')
+        self.log(Exception(tostring(id)..' is not a registered scene ID.', 'warning')
     else
         self:pushScene(scene)
     end

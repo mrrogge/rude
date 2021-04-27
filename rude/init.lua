@@ -14,7 +14,6 @@ local c = require('rude._contract')
 
 local rude = {}
 
-rude.alert=require('rude.alert')
 rude.assert=require('rude.assert')
 rude.DataContext=require('rude.DataContext')
 rude.Engine=require('rude.Engine')
