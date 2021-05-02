@@ -126,6 +126,8 @@ function DataContext:getDataEncoder(id)
         return nil, ('No data encoder registered for ID %s.'):format(id)
     end
     return self.dataEncoders[id]
+end
+
 function DataContext:registerLogger(id, fnc, minSeverity)
     self.loggers[id] = log.Logger(fnc, minSeverity)
     return self.loggers[id]

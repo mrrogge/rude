@@ -10,7 +10,7 @@ local function loveWriteFile(payload, path)
     if love and love.filesystem and love.filesystem.write then
         local ok, err = love.filesystem.write(path, payload)
         if not ok then
-            print(('LOG ERROR: %s'):format(err)
+            print(('LOG ERROR: %s'):format(err))
         end
     else
         if not loveWarningFlag then
