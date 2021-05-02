@@ -2,7 +2,6 @@
 --@classmod Engine
 
 local c = require('rude._contract')
-local assert = require('rude.assert')
 local bitserPlugin = require('rude.plugins.bitserPlugin')
 local DataContext = require('rude.DataContext')
 local dkjsonPlugin = require('rude.plugins.dkjsonPlugin')
@@ -24,7 +23,6 @@ Engine:include(EventEmitterMixin)
 function Engine:initialize(config)
     c('rt,t|s')
     -- expose the public rude modules to make access easier.
-    self.assert = assert
     self.DataContext = DataContext
     self.Engine = Engine
     self.EventEmitterMixin = EventEmitterMixin
@@ -213,7 +211,6 @@ end
 -- If no scene exists, an error will be raised. Use sceneExists() to test if a scene exists or not.
 function Engine:getScene(id)
     c('rt,rn|s')
-    assert.is.True(self:sceneExists(id))
     return self._scenes[id]
 end
 
@@ -234,7 +231,6 @@ end
 function Engine:getTopScene()
     c('rt')
     local scene = self._sceneStack[#(self._sceneStack)]
-    assert.is_not.Nil(scene)
     return scene
 end
 
@@ -244,7 +240,6 @@ function Engine:getSceneFromTop(offset)
     c('rt,n')
     offset = offset or 0
     local scene = self._sceneStack[#self._sceneStack - offset]
-    assert.is_not.Nil(scene)
     return scene
 end
 
@@ -253,7 +248,6 @@ end
 function Engine:getSceneAtIndex(idx)
     c('rt,rn')
     local scene = self._sceneStack[idx]
-    assert.is_not.Nil(scene)
     return scene
 end
 

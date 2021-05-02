@@ -3,7 +3,6 @@ local c = require('rude._contract')
 
 local rude = {}
 
-rude.assert=require('rude.assert')
 rude.DataContext=require('rude.DataContext')
 rude.Engine=require('rude.Engine')
 rude.EventEmitterMixin=require('rude.EventEmitterMixin')
