@@ -1,5 +1,7 @@
 local DataContext = require('rude.DataContext')
 local RudeObject = require('rude.RudeObject')
+local Exception = require('rude.Exception')
+local MissingComClassException = require('rude.MissingComClassException')
 
 describe('DataContext instance', function()
     local dataContext
@@ -35,10 +37,10 @@ describe('DataContext instance', function()
     end)
 
     describe('getComClass()', function()
-        it('returns nil and error message for non-existing class', function()
+        it('returns nil and exception for non-existing class', function()
             local class, err = dataContext:getComClass('unregistered')
             assert.is.equal(nil, class)
-            assert.is.truthy(type(err) == 'string')
+            assert.is.truthy(err:isInstanceOf(MissingComClassException))
         end)
         it('returns a previously registered class', function()
             local id = 'test'
@@ -71,10 +73,11 @@ describe('DataContext instance', function()
     end)
 
     describe('getFunction()', function()
-        it('returns nil and error message for non-existing function', function()
+        it('returns nil and exception for non-existing function', function()
             local f, err = dataContext:getFunction('unregistered')
             assert.is.equal(nil, f)
-            assert.is.truthy(type(err) == 'string')
+            print(err)
+            assert.is.truthy(err:isInstanceOf(Exception))
         end)
         it('returns a previously registered function', function()
             local id = 'test'
