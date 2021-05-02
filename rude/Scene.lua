@@ -552,7 +552,7 @@ local function buildHasComIterKey(self, ...)
             table.insert(buildHasComIterKeyTemp, tostring(class))
         end
     end
-    return table.concat(',', buildHasComIterKeyTemp)
+    return table.concat(buildHasComIterKeyTemp, ',')
 end
 
 local function buildComClassList(self, tbl, ...)
