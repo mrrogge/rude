@@ -27,3 +27,18 @@ end
 say:set('assertion.isType.positive', 'Expected %s to be type: %s')
 say:set('assertion.isType.negative', 'Expected %s to not be type: %s')
 luassert:register('assertion', 'Type', isType, 'assertion.isType.positive', 'assertion.isType.negative')
+
+--assert that tested value is equal to one of several choices
+local function isOneOf(state, args)
+    local testVal = args[1]
+    if args[2] == nil then return false end
+    for i=2, #args, 1 do
+        if testVal == args[i] then
+            return true
+        end
+    end
+    return false
+end
+say:set('assertion.oneOf.positive', '%s is not any of the allowed choices.')
+say:set('assertion.oneOf.negative', '%s is one of the allowed choices.')
+luassert:register('assertion', 'oneOf', isOneOf, 'assertion.oneOf.positive', 'assertion.oneOf.negative')
