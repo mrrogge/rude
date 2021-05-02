@@ -523,6 +523,7 @@ function Scene:getCom(entId, class, context)
     c('rt,rn|s,rt|s,t')
     context = context or self.engine.currentContext
     if type(class) == 'string' then
+        local err
         class, err = context:getComClass(class)
         if not class then return nil, err end
     end
