@@ -63,6 +63,7 @@ function Engine:initialize(config)
     self._sceneStack = {}
 
     self._importCache = {}
+    self._currentLoggerId = nil
 
     self:usePlugin(stdPlugin)
 
@@ -418,6 +419,22 @@ function Engine:getDataEncoder(id, context)
     c('rt,rs,t')
     context = context or self.currentContext
     return context:getDataEncoder(id)
+function Engine:registerLogger(id, fnc, minSeverity, context)
+    context = context or self.currentContext
+    return context:registerLogger(id, fnc, minSeverity)
+end
+
+function Engine:useLogger(id)
+    self._currentLoggerId = id
+end
+
+---Logs a payload.
+-- This method uses whatever Logger object is currently active for the Engine via useLogger(). This also depends on the current DataContext.
+function Engine:log(payload, ...)
+    local ok, err = self.currentContext:log(self._currentLoggerId, payload, ...)
+    if not ok then
+        return nil, err
+    end
 end
 
 --------------------------------------------------------------------------------
