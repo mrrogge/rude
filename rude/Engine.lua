@@ -305,7 +305,7 @@ function Engine:swapScene(scene)
     end
     local old = self:popScene()
     if not scene then
-        self.log(Exception(tostring(id)..' is not a registered scene ID.', 'warning')
+        self.log(Exception(tostring(id)..' is not a registered scene ID.', 'warning'))
     else
         self:pushScene(scene)
     end
@@ -418,6 +418,8 @@ function Engine:getDataEncoder(id, context)
     c('rt,rs,t')
     context = context or self.currentContext
     return context:getDataEncoder(id)
+end
+
 function Engine:registerLogger(id, fnc, minSeverity, context)
     context = context or self.currentContext
     return context:registerLogger(id, fnc, minSeverity)
