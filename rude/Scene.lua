@@ -529,7 +529,7 @@ function Scene:getCom(entId, class, context)
     end
     local com = self.com[class] and self.com[class][entId]
     if not com then
-        return nil, MissingComException(entId, class)
+        return nil, MissingComClassException(entId, class)
     end
     return com
 end
