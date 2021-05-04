@@ -592,18 +592,18 @@ function Scene:hasComIter(...)
     local iter = function()
         if not classes[1] then return end
         if not self.com[classes[1]] then return end
-        local found, done
-        while not found and not done do
+        local found
+        while not found do
             entId = next(self.com[classes[1]], entId)
-            done = not entId
+            if entId == nil then
+                return
+            end
+            found = true
             for i=2, #classes, 1 do
-                if entId == nil then
+                if not self.com[classes[i]] 
+                or not self.com[classes[i]][entId]
+                then
                     found = false
-                    break
-                end
-                found = self.com[classes[i]] and self.com[classes[i]][entId]
-                if not found then
-                    break
                 end
             end
         end
