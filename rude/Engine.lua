@@ -374,7 +374,7 @@ function Engine:registerClass(class, context)
 end
 
 function Engine:registerFunction(id, fnc, context)
-    c('rt,rf,t')
+    c('rt,rs,rf,t')
     context = context or self.currentContext
     context:registerFunction(id, fnc)
     return self
