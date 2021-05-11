@@ -8,8 +8,6 @@
 
 local c = require('rude._contract')
 local util = require('rude.util')
-local assert = require('rude.assert')
-local alert = require('rude.alert')
 local RudeObject = require('rude.RudeObject')
 
 local TablePool = RudeObject:subclass('TablePool')
@@ -51,7 +49,7 @@ end
 function TablePool:release(t, noClear)
     c('rt,rt,b')
     if (self.max > 0 and #self.pool >= self.max) then
-        alert('Exceeded TablePool size limit; proceeding to release tables automatically')
+        print('Exceeded TablePool size limit; proceeding to release tables automatically')
         for i=1, math.ceil(#self.pool/2), 1 do
             local t = table.remove(self.pool)
         end

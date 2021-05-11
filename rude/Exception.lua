@@ -16,7 +16,7 @@ function Exception:initialize(msg, level)
             self.src, self.line = info.short_src, info.currentline
         end
     end
-    return self    
+    return self
 end
 
 function Exception:toString()

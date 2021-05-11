@@ -2,13 +2,15 @@
 --@classmod Engine
 
 local c = require('rude._contract')
-local alert = require('rude.alert')
-local assert = require('rude.assert')
 local bitserPlugin = require('rude.plugins.bitserPlugin')
 local DataContext = require('rude.DataContext')
 local dkjsonPlugin = require('rude.plugins.dkjsonPlugin')
 local EventEmitterMixin = require('rude.EventEmitterMixin')
+local Exception = require('rude.Exception')
+local log = require('rude.log')
 local lovePlugin = require('rude.plugins.lovePlugin')
+local MissingComClassException = require('rude.MissingComClassException')
+local MissingComException = require('rude.MissingComException')
 local PoolableMixin = require('rude.PoolableMixin')
 local RudeObject = require('rude.RudeObject')
 local Scene = require('rude.Scene')
@@ -24,11 +26,12 @@ Engine:include(EventEmitterMixin)
 function Engine:initialize(config)
     c('rt,t|s')
     -- expose the public rude modules to make access easier.
-    self.alert = alert
-    self.assert = assert
     self.DataContext = DataContext
     self.Engine = Engine
     self.EventEmitterMixin = EventEmitterMixin
+    self.Exception = Exception
+    self.MissingComClassException = MissingComClassException
+    self.MissingComException = MissingComException
     self.plugins = {
         bitserPlugin=bitserPlugin,
         dkjsonPlugin=dkjsonPlugin,
@@ -63,6 +66,7 @@ function Engine:initialize(config)
     self._sceneStack = {}
 
     self._importCache = {}
+    self._currentLoggerId = nil
 
     self:usePlugin(stdPlugin)
 
@@ -213,7 +217,6 @@ end
 -- If no scene exists, an error will be raised. Use sceneExists() to test if a scene exists or not.
 function Engine:getScene(id)
     c('rt,rn|s')
-    assert.is.True(self:sceneExists(id))
     return self._scenes[id]
 end
 
@@ -234,7 +237,6 @@ end
 function Engine:getTopScene()
     c('rt')
     local scene = self._sceneStack[#(self._sceneStack)]
-    assert.is_not.Nil(scene)
     return scene
 end
 
@@ -244,7 +246,6 @@ function Engine:getSceneFromTop(offset)
     c('rt,n')
     offset = offset or 0
     local scene = self._sceneStack[#self._sceneStack - offset]
-    assert.is_not.Nil(scene)
     return scene
 end
 
@@ -253,7 +254,6 @@ end
 function Engine:getSceneAtIndex(idx)
     c('rt,rn')
     local scene = self._sceneStack[idx]
-    assert.is_not.Nil(scene)
     return scene
 end
 
@@ -267,7 +267,7 @@ function Engine:pushScene(scene)
         scene = self._scenes[id]
     end
     if not scene then
-        alert(tostring(id)..' is not a registered scene ID.', 'warning')
+        self.log(Exception(tostring(id)..' is not a registered scene ID.'))
         return
     end
     table.insert(self._sceneStack, scene)
@@ -305,7 +305,7 @@ function Engine:swapScene(scene)
     end
     local old = self:popScene()
     if not scene then
-        alert(tostring(id)..' is not a registered scene ID.', 'warning')
+        self.log(Exception(tostring(id)..' is not a registered scene ID.', 'warning'))
     else
         self:pushScene(scene)
     end
@@ -374,7 +374,7 @@ function Engine:registerClass(class, context)
 end
 
 function Engine:registerFunction(id, fnc, context)
-    c('rt,rf,t')
+    c('rt,rs,rf,t')
     context = context or self.currentContext
     context:registerFunction(id, fnc)
     return self
@@ -418,6 +418,24 @@ function Engine:getDataEncoder(id, context)
     c('rt,rs,t')
     context = context or self.currentContext
     return context:getDataEncoder(id)
+end
+
+function Engine:registerLogger(id, fnc, minSeverity, context)
+    context = context or self.currentContext
+    return context:registerLogger(id, fnc, minSeverity)
+end
+
+function Engine:useLogger(id)
+    self._currentLoggerId = id
+end
+
+---Logs a payload.
+-- This method uses whatever Logger object is currently active for the Engine via useLogger(). This also depends on the current DataContext.
+function Engine:log(payload, ...)
+    local ok, err = self.currentContext:log(self._currentLoggerId, payload, ...)
+    if not ok then
+        return nil, err
+    end
 end
 
 --------------------------------------------------------------------------------

@@ -3,11 +3,12 @@ local c = require('rude._contract')
 
 local rude = {}
 
-rude.alert=require('rude.alert')
-rude.assert=require('rude.assert')
 rude.DataContext=require('rude.DataContext')
 rude.Engine=require('rude.Engine')
 rude.EventEmitterMixin=require('rude.EventEmitterMixin')
+rude.Exception=require('rude.Exception')
+rude.MissingComClassException=require('rude.MissingComClassException')
+rude.MissingComException=require('rude.MissingComException')
 rude.plugins={
     bitserPlugin=require('rude.plugins.bitserPlugin'),
     dkjsonPlugin=require('rude.plugins.dkjsonPlugin'),

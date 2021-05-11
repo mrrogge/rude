@@ -1,3 +1,5 @@
+local c = require('rude._contract')
+
 --an asset loader for fonts
 local function fontAssetLoader(id)
     local args = {}
