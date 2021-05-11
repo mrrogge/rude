@@ -1,3 +1,5 @@
+---Provides support for JSON encoding/decoding via the dkjson library.
+
 local jsonFound, json = pcall(require, 'dkjson')
 
 local encoderState = {indent=true}

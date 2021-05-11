@@ -1,3 +1,6 @@
+---Provides support for binary encoding/decoding with the bitser external library.
+-- bitser can be found here: [https://github.com/gvx/bitser](https://github.com/gvx/bitser).
+
 local contract = require('rude._contract')
 local bitserFound, bitser = pcall(require, 'bitser')
 
