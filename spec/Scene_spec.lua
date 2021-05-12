@@ -487,7 +487,11 @@ describe('a Scene instance', function()
     end)
 
     describe('hasComIter()', function()
-
+        it('returns an iterator that returns an entity ID with the passed com class', function()
+            local TestCom = RudeObject:subclass('TestCom')
+            scene:addCom(1, TestCom)
+            assert.is.equal(scene:hasComIter(TestCom)(), 1)
+        end)
     end)
 
     describe('clearHasComIterCache()', function()
