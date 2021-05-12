@@ -5,7 +5,6 @@ local c = require('rude._contract')
 local bitserPlugin = require('rude.plugins.bitserPlugin')
 local DataContext = require('rude.DataContext')
 local dkjsonPlugin = require('rude.plugins.dkjsonPlugin')
-local EventEmitterMixin = require('rude.EventEmitterMixin')
 local Exception = require('rude.Exception')
 local log = require('rude.log')
 local lovePlugin = require('rude.plugins.lovePlugin')
@@ -20,7 +19,6 @@ local TablePool = require('rude.TablePool')
 local util = require('rude.util')
 
 local Engine = RudeObject:subclass('Engine')
-Engine:include(EventEmitterMixin)
 
 ---Initializes the object.
 function Engine:initialize(config)
@@ -28,7 +26,6 @@ function Engine:initialize(config)
     -- expose the public rude modules to make access easier.
     self.DataContext = DataContext
     self.Engine = Engine
-    self.EventEmitterMixin = EventEmitterMixin
     self.Exception = Exception
     self.MissingComClassException = MissingComClassException
     self.MissingComException = MissingComException

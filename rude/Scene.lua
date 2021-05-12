@@ -5,12 +5,10 @@
 local c = require('rude._contract')
 local Exception = require('rude.Exception')
 local MissingComClassException = require('rude.MissingComClassException')
-local EventEmitterMixin = require('rude.EventEmitterMixin')
 local RudeObject = require('rude.RudeObject')
 local util = require('rude.util')
 
 local Scene = RudeObject:subclass('Scene')
-Scene:include(EventEmitterMixin)
 
 function Scene:initialize(engine, config)
     c('rt,rt,t|s')
@@ -37,6 +35,7 @@ function Scene:initialize(engine, config)
     self._onShowFlag = false
     self._onHideFlag = false
     self.removedEnts = {}
+    self._eventHandlers = {}
     return self
 end
 
@@ -400,6 +399,56 @@ end
 function Scene:wheelmoved(x, y)
     c('rt,rn,rn')
     self:onWheelmoved(x, y)
+end
+
+---Emits a scene event.
+function Scene:emit(event, ...)
+    c('rt,rs')
+    local ok, err = self:onEvent(event, ...)
+    if not ok and err then
+        self.engine:log(err)
+    end
+    if self._eventHandlers[event] then
+        for i, handler in ipairs(self._eventHandlers[event]) do
+            ok, err = handler(...)
+            if not ok and err then
+                self.engine:log(err)
+            end
+        end
+    end
+    return true
+end
+
+---A callback that handles arbitrary events for the scene.
+-- This method is intended to be overridden by the user. It is called anytime emit() is called, passing the corresponding event identifier and arguments.
+function Scene:onEvent(event, ...)
+
+end
+
+function Scene:registerEventHandler(event, idx, handler)
+    c('rt,rs,rn|f|t,f|t')
+    if handler == nil then
+        handler = idx
+        idx = nil
+        if type(handler) == 'number' then
+            error('Must specify an event handler.')
+        end
+    end
+    self._eventHandlers[event] = self._eventHandlers[event] or {}
+    if idx then
+        table.insert(self._eventHandlers[event], idx, handler)
+    else
+        table.insert(self._eventHandlers[event], handler)
+    end
+    return idx or #self._eventHandlers[event]
+end
+
+function Scene:removeEventHandler(event, idx)
+    c('rt,rs,n')
+    if self._eventHandlers[event] then
+        table.remove(self._eventHandlers[event], idx)
+    end
+    return true
 end
 --------------------------------------------------------------------------------
 
