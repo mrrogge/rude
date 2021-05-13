@@ -399,6 +399,7 @@ function Engine:getAsset(loaderId, assetId, forceLoad, context)
 end
 
 function Engine:registerDataDecoder(id, decoder, context)
+    c('rt,rs,rf|t,t')
     context = context or self.currentContext
     return context:registerDataDecoder(id, decoder)
 end
