@@ -1,11 +1,26 @@
+local Engine = require('rude.Engine')
 
-describe('lovePlugin', function()
-    local love
+describe('plugins.lovePlugin', function()
+    local engine
 
     before_each(function()
-        
+        engine = Engine()
     end)
 
+    insulate('with LOVE', function()
+        local plugin = require('rude.plugins.lovePlugin')
+    end)
+
+    insulate('without LOVE', function()
+        _G.love = nil
+        local plugin = require('rude.plugins.lovePlugin')
+
+        it('raises an error', function()
+            assert.has.errors(function()
+                engine:usePlugin(plugin)
+            end)
+        end)
+    end)
     -- describe('attach()', function()
     --     it('allows engine callbacks to be called from LOVE callbacks', function()
     --         local e = Engine()
