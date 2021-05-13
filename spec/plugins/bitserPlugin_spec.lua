@@ -1,6 +1,6 @@
 local Engine = require('rude.Engine')
 
-describe('#bitser plugins/bitserPlugin', function()
+describe('#bitser plugins.bitserPlugin', function()
     local engine
     before_each(function()
         engine = Engine()
@@ -95,7 +95,7 @@ describe('#bitser plugins/bitserPlugin', function()
         _G.jit = nil
         local plugin = require('rude.plugins.bitserPlugin')
 
-        pending('raises an error', function()
+        it('raises an error', function()
             assert.has.errors(function()
                 engine:usePlugin(plugin)
             end)
