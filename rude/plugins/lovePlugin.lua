@@ -3,10 +3,11 @@ local c = require('rude._contract')
 --an asset loader for fonts
 local function fontAssetLoader(id)
     local args = {}
-    local i, j = 1, string.find(id, ',', i)
+    local i = 1
+    local j = string.find(id, ',', i)
     while j do
-        table.insert(args, string.sub(id, i, j))
-        i, j = j+1, string.find(id, j+1)
+        table.insert(args, string.sub(id, i, j-1))
+        i, j = j+2, string.find(id, ',', j+1)
     end
     table.insert(args, string.sub(id, i))
     local fileName, size, hinting, dpiScale, imageFileName
@@ -14,18 +15,22 @@ local function fontAssetLoader(id)
         size, hinting, dpiScale = tonumber(args[1]), args[2], 
             tonumber(args[3])
     else
-        fileName = args[1]
-        if tonumber(args[2]) then
-            size, hinting, dpiScale = tonumber(args[2]), args[3],
-                tonumber(args[4])
-        else
-            imageFileName = args[2]
+        if args[1] then
+            fileName = args[1]
+            if tonumber(args[2]) then
+                size, hinting, dpiScale = tonumber(args[2]), args[3],
+                    tonumber(args[4])
+            else
+                imageFileName = args[2]
+            end
         end
     end
     if fileName and imageFileName then
         return love.graphics.newFont(fileName, imageFileName)
-    else
+    elseif fileName then 
         return love.graphics.newFont(fileName, size, hinting, dpiScale)
+    else
+        return love.graphics.newFont()
     end
 end
 

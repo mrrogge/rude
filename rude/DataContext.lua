@@ -83,7 +83,7 @@ function DataContext:getAsset(loaderId, assetId, forceLoad)
         end
         self.assets[loaderId][assetId] = self.assetLoaders[loaderId](assetId)
     end
-    return self.assets[loader]
+    return self.assets[loaderId][assetId]
 end
 
 ---Releases all asset references for a given loaderId.
