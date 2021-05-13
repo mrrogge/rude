@@ -6,3 +6,4 @@ env/
 /lua
 /lua_modules
 /.luarocks
+/spec/lib
