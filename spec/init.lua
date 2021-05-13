@@ -2,7 +2,7 @@ local luassert = require('luassert')
 local say = require('say')
 
 -- catch accidental global scope assignments using the strict module.
-require('rude.lib.strict')
+require('spec.lib.strict')
 
 --assert that a class instance is an instance of a specified class.
 local function isInstanceOf(state, args)
