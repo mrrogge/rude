@@ -1,5 +1,6 @@
 local Engine = require('rude.Engine')
 local Scene = require('rude.Scene')
+local RudeObject = require('rude.RudeObject')
 
 describe('a Scene instance', function()
     local engine, scene
