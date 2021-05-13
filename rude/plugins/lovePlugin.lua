@@ -27,10 +27,10 @@ local function fontAssetLoader(id)
     end
     if fileName and imageFileName then
         return love.graphics.newFont(fileName, imageFileName)
-    elseif fileName then 
+    elseif fileName then
         return love.graphics.newFont(fileName, size, hinting, dpiScale)
     else
-        return love.graphics.newFont()
+        return love.graphics.newFont(size, hinting, dpiScale)
     end
 end
 
