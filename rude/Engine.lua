@@ -109,7 +109,7 @@ function Engine:draw()
 end
 
 ---Callback function that is called each time a key is pressed.
-function Engine:keypressed(key, scancode, isrepeat)
+function Engine:keyPressed(key, scancode, isrepeat)
     c('rt,rs,rs,rb')
     if self:getSceneStackSize() == 0 then return end
     local scene = self:getTopScene()
@@ -119,7 +119,7 @@ function Engine:keypressed(key, scancode, isrepeat)
 end
 
 ---Callback function that is called each time a key is released.
-function Engine:keyreleased(key, scancode) 
+function Engine:keyReleased(key, scancode) 
     c('rt,rs,rs')
     if self:getSceneStackSize() == 0 then return end
     local scene = self:getTopScene()
@@ -128,7 +128,7 @@ function Engine:keyreleased(key, scancode)
     end
 end
 
-function Engine:mousemoved(x, y, dx, dy, istouch)
+function Engine:mouseMoved(x, y, dx, dy, istouch)
     c('rt,rn,rn,rn,rn,rb')
     if self:getSceneStackSize() == 0 then return end
     local scene = self:getTopScene()
@@ -137,7 +137,7 @@ function Engine:mousemoved(x, y, dx, dy, istouch)
     end
 end
 
-function Engine:mousepressed(x, y, button, istouch, presses)
+function Engine:mousePressed(x, y, button, istouch, presses)
     c('rt,rn,rn,rn,rb,rn')
     if self:getSceneStackSize() == 0 then return end
     local scene = self:getTopScene()
@@ -146,7 +146,7 @@ function Engine:mousepressed(x, y, button, istouch, presses)
     end
 end
 
-function Engine:mousereleased(x, y, button, istouch, presses)
+function Engine:mouseReleased(x, y, button, istouch, presses)
     c('rt,rn,rn,rn,rb,rn')
     if self:getSceneStackSize() == 0 then return end
     local scene = self:getTopScene()
@@ -155,7 +155,7 @@ function Engine:mousereleased(x, y, button, istouch, presses)
     end
 end
 
-function Engine:wheelmoved(x, y)
+function Engine:wheelMoved(x, y)
     c('rt,rn,rn')
     if self:getSceneStackSize() == 0 then return end
     local scene = self:getTopScene()
