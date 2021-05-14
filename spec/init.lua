@@ -18,6 +18,10 @@ global('love')
 love = {
     filesystem={
         write=function() return true end
+    },
+    getVersion=function() return 11, 3 end,
+    graphics={
+        newImage=function() return {} end
     }
 }
 
