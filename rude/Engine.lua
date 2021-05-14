@@ -318,7 +318,7 @@ end
 -- plugin can be either a require path to a plugin module, or the actual plugin
 -- object.
 function Engine:usePlugin(plugin, ...)
-    c('rt,rt|f|s')
+    c('rt,rt|f|s', self, plugin)
     if type(plugin) == 'string' then
         plugin = require(plugin)
     end
@@ -389,6 +389,12 @@ function Engine:registerAssetLoader(id, loader, context)
     return context:registerAssetLoader(id, loader)
 end
 
+function Engine:getAssetLoader(id, context)
+    c('rt,rs,t')
+    context = context or self.currentContext
+    return context:getAssetLoader(id)
+end
+
 function Engine:getAsset(loaderId, assetId, forceLoad, context)
     c('rt,rs,ra,b,t')
     context = context or self.currentContext
@@ -396,6 +402,7 @@ function Engine:getAsset(loaderId, assetId, forceLoad, context)
 end
 
 function Engine:registerDataDecoder(id, decoder, context)
+    c('rt,rs,rf|t,t', self, id, decoder, context)
     context = context or self.currentContext
     return context:registerDataDecoder(id, decoder)
 end
