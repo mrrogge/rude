@@ -1,4 +1,5 @@
 local Engine = require('rude.Engine')
+local plugin = require('rude.plugins.bitserPlugin')   
 
 describe('#bitser plugins.bitserPlugin', function()
     local engine
@@ -13,7 +14,6 @@ describe('#bitser plugins.bitserPlugin', function()
         end
 
         insulate('#bitser and when bitser module exists', function()
-            local plugin = require('rude.plugins.bitserPlugin')
             --explicitly require bitser to make sure it exists for these tests
             require('bitser')
 
@@ -62,8 +62,11 @@ describe('#bitser plugins.bitserPlugin', function()
             end)
     
             insulate('and without LOVE', function()
-                -- NOTE: for some reason `love = nil` does not work, I need to clear it on _G explicitly. This may be due to how insulate() works, or something with the strict library, but I'm not sure.
-                _G.love = nil
+                -- NOTE: for some reason I'm having trouble with clearing love and jit temporarily within an insulate block. I may be misunderstanding how these are supposed to work. For the time being, I am directly clearing the APIs from the _G table and adding them back in at the end of the block so that the next block of tests aren't affected.
+                local loveOld = _G.love
+                setup(function()
+                    _G.love = nil
+                end)
 
                 it('using plugin does not error', function()
                     assert.has_no.errors(function()
@@ -75,14 +78,16 @@ describe('#bitser plugins.bitserPlugin', function()
                     engine:usePlugin(plugin)
                     assert.is_not.truthy(engine:getDataDecoder('bitser-file-love'))
                 end)
+
+                teardown(function()
+                    _G.love = loveOld
+                end)
             end)
         end)
 
         insulate('and when bitser module is missing', function()
-            --TODO: I'm not sure how to test this. If spec/lib/bitser.lua exists, then the plugin will always find it when it does the internal require call. I can't import the module, then remove its bitser reference after-the-fact. The only options seem to be removing bitser.lua manually, or messing with the require path. For now, I'll just mark these tests as pending.
-            local plugin = require('rude.plugins.bitserPlugin')
-
-            pending('raises an error', function()
+            --TODO: I'm not sure how to test this. If spec/lib/bitser.lua exists, then the plugin will always find it when it does the internal require call. I can't import the module, then remove its bitser reference after-the-fact. The only options seem to be removing bitser.lua manually, or messing with the require path. For now, I'll just mark these tests as skipped.
+            it('#skip raises an error', function()
                 assert.has.errors(function()
                     engine:usePlugin(plugin)
                 end)
@@ -91,14 +96,19 @@ describe('#bitser plugins.bitserPlugin', function()
     end)
 
     insulate('without jit', function()
-        --TODO: for some reason clearing the jit table causes this test to error and I'm not sure why. For now I'm setting it to pending.
-        _G.jit = nil
-        local plugin = require('rude.plugins.bitserPlugin')
+        local jitOld = _G.jit
+        setup(function()
+            _G.jit = nil
+        end)
 
         it('raises an error', function()
             assert.has.errors(function()
                 engine:usePlugin(plugin)
             end)
+        end)
+
+        teardown(function()
+            _G.jit = jitOld
         end)
     end)
 end)

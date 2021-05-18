@@ -72,6 +72,18 @@ function DataContext:registerAssetLoader(id, loader)
     self.assetLoaders[id] = loader
     return self
 end
+
+---Returns an asset loader for a given id.
+-- If loader does not exist, returns nil and an exception.
+function DataContext:getAssetLoader(id)
+    contract('rt,rs')
+    local loader = self.assetLoaders[id]
+    if not loader then
+        return nil, Exception(('No asset loader defined for ID %s.'):format(id))
+    end
+    return loader
+end
+
 ---Returns an asset for a given loaderId and assetId.
 -- Assets are cached so that repeat calls return the previously built asset. When forceLoad is true, the asset will be built again even if it was already built.
 function DataContext:getAsset(loaderId, assetId, forceLoad)

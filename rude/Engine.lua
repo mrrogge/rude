@@ -392,6 +392,12 @@ function Engine:registerAssetLoader(id, loader, context)
     return context:registerAssetLoader(id, loader)
 end
 
+function Engine:getAssetLoader(id, context)
+    c('rt,rs,t')
+    context = context or self.currentContext
+    return context:getAssetLoader(id)
+end
+
 function Engine:getAsset(loaderId, assetId, forceLoad, context)
     c('rt,rs,ra,b,t')
     context = context or self.currentContext
