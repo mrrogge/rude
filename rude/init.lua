@@ -5,7 +5,6 @@ local rude = {}
 
 rude.DataContext=require('rude.DataContext')
 rude.Engine=require('rude.Engine')
-rude.EventEmitterMixin=require('rude.EventEmitterMixin')
 rude.Exception=require('rude.Exception')
 rude.MissingComClassException=require('rude.MissingComClassException')
 rude.MissingComException=require('rude.MissingComException')

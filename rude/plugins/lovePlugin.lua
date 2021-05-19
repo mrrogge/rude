@@ -87,42 +87,42 @@ return function(engine, context)
             if engine.love._initCallbacks.keypressed then
                 engine.love._initCallbacks.keypressed(key, scancode, isrepeat)
             end
-            engine:keypressed(key, scancode, isrepeat)
+            engine:keyPressed(key, scancode, isrepeat)
         end
         love.keyreleased = function(key, scancode)
             c('rs,rs')
             if engine.love._initCallbacks.keyreleased then
                 engine.love._initCallbacks.keyreleased(key, scancode)
             end
-            engine:keyreleased(key, scancode)
+            engine:keyReleased(key, scancode)
         end
         love.mousemoved = function(x,y,dx,dy,istouch)
             c('rn,rn,rn,rn,rb')
             if engine.love._initCallbacks.mousemoved then
                 engine.love._initCallbacks.mousemoved(x,y,dx,dy,istouch)
             end
-            engine:mousemoved(x,y,dx,dy,istouch)
+            engine:mouseMoved(x,y,dx,dy,istouch)
         end
         love.mousepressed = function(x,y,button,istouch,presses)
             c('rn,rn,rn,rb,rn')
             if engine.love._initCallbacks.mousepressed then
                 engine.love._initCallbacks.mousepressed(x,y,button,istouch,presses)
             end
-            engine:mousepressed(x,y,button,istouch,presses)
+            engine:mousePressed(x,y,button,istouch,presses)
         end
         love.mousereleased = function(x,y,button,istouch,presses)
             c('rn,rn,rn,rb,rn')
             if engine.love._initCallbacks.mousereleased then
                 engine.love._initCallbacks.mousereleased(x,y,button,istouch,presses)
             end
-            engine:mousereleased(x,y,button,istouch,presses)
+            engine:mouseReleased(x,y,button,istouch,presses)
         end
         love.wheelmoved = function(x,y)
             c('rn,rn')
             if engine.love._initCallbacks.wheelmoved then
                 engine.love._initCallbacks.wheelmoved(x,y)
             end
-            engine:wheelmoved(x,y)
+            engine:wheelMoved(x,y)
         end
         engine.love._attached = true
     end
@@ -130,7 +130,6 @@ return function(engine, context)
     ---Detaches the engine from the LOVE environment.
     -- This resets all LOVE callbacks to their original functions. Does nothing if the engine is not currently attached.
     engine.love.detach = function()
-        c('rt')
         if not engine.love._attached then return end
         for k,v in pairs(engine.love._initCallbacks) do
             love[k] = v
