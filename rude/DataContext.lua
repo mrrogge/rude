@@ -72,6 +72,18 @@ function DataContext:registerAssetLoader(id, loader)
     self.assetLoaders[id] = loader
     return self
 end
+
+---Returns an asset loader for a given id.
+-- If loader does not exist, returns nil and an exception.
+function DataContext:getAssetLoader(id)
+    contract('rt,rs')
+    local loader = self.assetLoaders[id]
+    if not loader then
+        return nil, Exception(('No asset loader defined for ID %s.'):format(id))
+    end
+    return loader
+end
+
 ---Returns an asset for a given loaderId and assetId.
 -- Assets are cached so that repeat calls return the previously built asset. When forceLoad is true, the asset will be built again even if it was already built.
 function DataContext:getAsset(loaderId, assetId, forceLoad)
@@ -83,7 +95,7 @@ function DataContext:getAsset(loaderId, assetId, forceLoad)
         end
         self.assets[loaderId][assetId] = self.assetLoaders[loaderId](assetId)
     end
-    return self.assets[loader]
+    return self.assets[loaderId][assetId]
 end
 
 ---Releases all asset references for a given loaderId.
@@ -99,7 +111,7 @@ end
 ---Registers a data decoder to a given id.
 -- Data decoders are functions that accept an input and build a corresponding Lua table of data. These are used by the Engine:importData() function to read data into the engine.
 function DataContext:registerDataDecoder(id, decoder)
-    contract('rt,rs,rf|t')
+    contract('rt,rs,rf|t', self, id, decoder)
     self.dataDecoders[id] = decoder
     return self
 end
@@ -115,7 +127,7 @@ end
 ---Registers a data encoder to a given id.
 -- Data encoders are functions that accept an input and an optional string path. If path is not specified, encoders should return a string representation of the input. If path is specified, then the string value is written out to an external file at path. These are used by Engine:exportData() to write data out from the engine.
 function DataContext:registerDataEncoder(id, encoder)
-    contract('rt,rs,rf|t')
+    contract('rt,rs,rf|t', self, id, encoder)
     self.dataEncoders[id] = encoder
     return self
 end
