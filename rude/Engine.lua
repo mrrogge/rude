@@ -127,7 +127,7 @@ local function updateScenes(self, dt)
             self._sceneStack[i]:update(dt)
         end
     elseif self.config.sceneMode == 'single' then
-        self._scenStack[#self._sceneStack]:update(dt)
+        self._sceneStack[#self._sceneStack]:update(dt)
     else
         self:log(ValueError('unknown value %s for config.sceneMode.'):format(self.config.sceneMode))
     end
@@ -288,7 +288,11 @@ end
 -- If no scene exists, an error will be raised. Use sceneExists() to test if a scene exists or not.
 function Engine:getScene(id)
     c('rt,rn|s')
-    return self._scenes[id]
+    local scene = self._scenes[id]
+    if not scene then
+        return nil, Exception(('Scene %s does not exist.'):format(id))
+    end
+    return scene
 end
 
 ---Returns the number of scenes currently on the stack.
