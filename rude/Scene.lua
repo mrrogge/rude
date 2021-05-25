@@ -12,7 +12,7 @@ local TypeError = require('rude.TypeError')
 local Scene = RudeObject:subclass('Scene')
 
 function Scene:initialize(engine, config)
-    c('rt,rt,t|s')
+    c('rt,rt,t')
     RudeObject.initialize(self)
     self.engine = engine
 

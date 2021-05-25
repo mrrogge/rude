@@ -254,10 +254,10 @@ end
 
 ---Creates a new scene and registers it.
 -- cls lets you specify the specific scene class to build.
-function Engine:newScene(id, cls, ...)
-    c('rt,rn|s,t')
+function Engine:newScene(id, cls, config)
+    c('rt,rn|s,t,t')
     cls = cls or Scene
-    local scene = cls(self, ...)
+    local scene = cls(self, config)
     self._scenes[id] = scene
     return scene
 end
