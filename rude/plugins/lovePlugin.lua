@@ -7,7 +7,7 @@ local function fontAssetLoader(id)
     local j = string.find(id, ',', i)
     while j do
         table.insert(args, string.sub(id, i, j-1))
-        i, j = j+2, string.find(id, ',', j+1)
+        i, j = j+1, string.find(id, ',', j+1)
     end
     table.insert(args, string.sub(id, i))
     local fileName, size, hinting, dpiScale, imageFileName
@@ -25,6 +25,7 @@ local function fontAssetLoader(id)
             end
         end
     end
+    print(fileName, size, hinting, dpiScale, imageFileName)
     if fileName and imageFileName then
         return love.graphics.newFont(fileName, imageFileName)
     elseif fileName then
