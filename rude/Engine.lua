@@ -127,7 +127,9 @@ local function updateScenes(self, dt)
             self._sceneStack[i]:update(dt)
         end
     elseif self.config.sceneMode == 'single' then
-        self._sceneStack[#self._sceneStack]:update(dt)
+        if #self._sceneStack > 0 then
+            self._sceneStack[#self._sceneStack]:update(dt)
+        end
     else
         self:log(ValueError('unknown value %s for config.sceneMode.'):format(self.config.sceneMode))
     end
@@ -158,7 +160,9 @@ function Engine:draw()
             self._sceneStack[i]:draw()
         end
     elseif self.config.sceneMode == 'single' then
-        self._sceneStack[#self._sceneStack]:draw()
+        if #self._sceneStack > 0 then
+            self._sceneStack[#self._sceneStack]:draw()
+        end
     else
         self:log(ValueError('unknown value %s for config.sceneMode.'):format(self.config.sceneMode))
     end
