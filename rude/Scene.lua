@@ -357,61 +357,61 @@ function Scene:draw()
 end
 
 ---Called every time a key is pressed.
-function Scene:onKeypressed(key, scancode, isrepeat)
+function Scene:onKeyPressed(key, scancode, isrepeat)
 
 end
 
 ---Handles key pressed logic for the scene.
-function Scene:keypressed(key, scancode, isrepeat)
+function Scene:keyPressed(key, scancode, isrepeat)
     c('rt,rs,rs,rb')
-    self:onKeypressed(key, scancode, isrepeat)
+    self:onKeyPressed(key, scancode, isrepeat)
 end
 
 ---Called every time a key is released.
-function Scene:onKeyreleased(key, scancode)
+function Scene:onKeyReleased(key, scancode)
 
 end
 
 ---Handles key release logic for the scene.
-function Scene:keyreleased(key, scancode)
+function Scene:keyReleased(key, scancode)
     c('rt,rs,rs')
-    self:onKeyreleased(key, scancode)
+    self:onKeyReleased(key, scancode)
 end
 
-function Scene:onMousemoved(x, y, dx, dy, istouch)
+function Scene:onMouseMoved(x, y, dx, dy, istouch)
 
 end
 
-function Scene:mousemoved(x, y, dx, dy, istouch)
+function Scene:mouseMoved(x, y, dx, dy, istouch)
     c('rt,rn,rn,rn,rn,rb')
-    self:onMousemoved(x, y, dx, dy, istouch)
+    self:onMouseMoved(x, y, dx, dy, istouch)
 end
 
-function Scene:onMousepressed(x, y, button, istouch, presses)
+function Scene:onMousePressed(x, y, button, istouch, presses)
 
 end
 
-function Scene:mousepressed(x, y, button, istouch, presses)
+function Scene:mousePressed(x, y, button, istouch, presses)
     c('rt,rn,rn,rn,rb,rn')
-    self:onMousepressed(x, y, button, istouch, presses)
+    self:onMousePressed(x, y, button, istouch, presses)
 end
 
-function Scene:onMousereleased(x, y, button, istouch, presses)
+function Scene:onMouseReleased(x, y, button, istouch, presses)
 
 end
 
-function Scene:mousereleased(x, y, button, istouch, presses)
+function Scene:mouseReleased(x, y, button, istouch, presses)
     c('rt,rn,rn,rn,rb,rn')
-    self:onMousereleased(x, y, button, istouch, presses)
+    self:onMouseReleased(x, y, button, istouch, presses)
 end
 
-function Scene:onWheelmoved(x, y)
+function Scene:onWheelMoved(x, y)
 
 end
 
-function Scene:wheelmoved(x, y)
+function Scene:wheelMoved(x, y)
     c('rt,rn,rn')
-    self:onWheelmoved(x, y)
+    self:onWheelMoved(x, y)
 end
 
 ---Emits a scene event.
