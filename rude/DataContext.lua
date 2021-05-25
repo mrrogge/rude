@@ -119,7 +119,7 @@ end
 function DataContext:getDataDecoder(id)
     contract('rt,rs')
     if not self.dataDecoders[id] then
-        return nil, ('No data decoder registered for ID %s.'):format(id)
+        return nil, Exception(('No data decoder registered for ID %s.'):format(id))
     end
     return self.dataDecoders[id]
 end
@@ -135,7 +135,7 @@ end
 function DataContext:getDataEncoder(id)
     contract('rt,rs')
     if not self.dataEncoders[id] then
-        return nil, ('No data encoder registered for ID %s.'):format(id)
+        return nil, Exception(('No data encoder registered for ID %s.'):format(id))
     end
     return self.dataEncoders[id]
 end
