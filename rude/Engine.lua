@@ -27,6 +27,7 @@ function Engine:initialize(config)
     self.DataContext = DataContext
     self.Engine = Engine
     self.Exception = Exception
+    self.log = log
     self.MissingComClassException = MissingComClassException
     self.MissingComException = MissingComException
     self.plugins = {
