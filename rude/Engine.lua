@@ -259,6 +259,7 @@ function Engine:newScene(id, cls, config)
     cls = cls or Scene
     local scene = cls(self, config)
     self._scenes[id] = scene
+    self:pushScene(id)
     return scene
 end
 

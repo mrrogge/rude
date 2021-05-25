@@ -6,6 +6,7 @@ local rude = {}
 rude.DataContext=require('rude.DataContext')
 rude.Engine=require('rude.Engine')
 rude.Exception=require('rude.Exception')
+rude.logging=require('rude.logging')
 rude.MissingComClassException=require('rude.MissingComClassException')
 rude.MissingComException=require('rude.MissingComException')
 rude.plugins={
