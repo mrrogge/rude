@@ -2,7 +2,7 @@ local contract = require('rude._contract')
 local RudeObject = require('rude.RudeObject')
 local Exception = require('rude.Exception')
 local MissingComClassException = require('rude.MissingComClassException')
-local log = require('rude.log')
+local logging = require('rude.logging')
 
 local DataContext = RudeObject:subclass('DataContext')
 
@@ -141,7 +141,7 @@ function DataContext:getDataEncoder(id)
 end
 
 function DataContext:registerLogger(id, fnc, minSeverity)
-    self.loggers[id] = log.Logger(fnc, minSeverity)
+    self.loggers[id] = logging.Logger(fnc, minSeverity)
     return self.loggers[id]
 end
 
