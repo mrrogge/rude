@@ -7,6 +7,7 @@ local Exception = require('rude.Exception')
 local MissingComClassException = require('rude.MissingComClassException')
 local RudeObject = require('rude.RudeObject')
 local util = require('rude.util')
+local TypeError = require('rude.TypeError')
 
 local Scene = RudeObject:subclass('Scene')
 
@@ -14,10 +15,6 @@ function Scene:initialize(engine, config)
     c('rt,rt,t|s')
     RudeObject.initialize(self)
     self.engine = engine
-    self.config = {}
-    if config then
-        self:importConfig(config)
-    end
 
     --entity/component stuff
     self.com = {}
@@ -36,6 +33,22 @@ function Scene:initialize(engine, config)
     self._onHideFlag = false
     self.removedEnts = {}
     self._eventHandlers = {}
+    self.config = {
+        user={}
+    }
+    if config then
+        self:updateConfig(config)
+    end
+    return self
+end
+
+function Scene:updateConfig(config)
+    c('rt,rt')
+    if type(config.user) == 'table' then
+        self.engine:mergeData(config.user, self.config.user)
+    else
+        self.engine:log(TypeError(config.user, 'config.user', 'table'))
+    end
     return self
 end
 
