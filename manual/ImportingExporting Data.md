@@ -1,2 +1,2 @@
 # Importing/Exporting Data
-`rude` is designed for a data-based workflow. Everything in your game is data, and that data needs to be managed flexibly and reliably.
+`rude` makes it easy to import data files (e.g. JSON, binary data) into your application and export objects out to files. 
