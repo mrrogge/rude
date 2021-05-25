@@ -6,7 +6,7 @@ local bitserPlugin = require('rude.plugins.bitserPlugin')
 local DataContext = require('rude.DataContext')
 local dkjsonPlugin = require('rude.plugins.dkjsonPlugin')
 local Exception = require('rude.Exception')
-local log = require('rude.log')
+local logging = require('rude.logging')
 local lovePlugin = require('rude.plugins.lovePlugin')
 local MissingComClassException = require('rude.MissingComClassException')
 local MissingComException = require('rude.MissingComException')
@@ -28,7 +28,7 @@ function Engine:initialize(config)
     self.DataContext = DataContext
     self.Engine = Engine
     self.Exception = Exception
-    self.log = log
+    self.logging = logging
     self.MissingComClassException = MissingComClassException
     self.MissingComException = MissingComException
     self.plugins = {

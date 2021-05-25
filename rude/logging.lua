@@ -40,7 +40,7 @@ function Logger:log(payload, ...)
     return self
 end
 
-local log = {
+local logging = {
     Logger=Logger,
     FATAL=1,
     SEVERE=2,
@@ -49,4 +49,4 @@ local log = {
     DEBUG=5
 }
 
-return log
+return logging
