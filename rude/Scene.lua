@@ -22,23 +22,23 @@ function Scene:initialize(engine, config)
     self._hasComIterCache = {}
     self._tagIterCache = {}
     self._nextEntId = 1
-
-    self._startState = 'starting'
-    self._pauseState = 'paused'
-    self._visibleState = 'invisible'
-    self._onStartFlag = false
-    self._onPauseFlag = false
-    self._onResumeFlag = false
-    self._onShowFlag = false
-    self._onHideFlag = false
     self.removedEnts = {}
+
+    --event states
+    self._isPaused = false
+    self._isVisible = true
+    self._isSetup = false
+    self._isInputEnabled = true
     self._eventHandlers = {}
+
+    --setup config
     self.config = {
         user={}
     }
     if config then
         self:updateConfig(config)
     end
+
     return self
 end
 
@@ -53,365 +53,286 @@ function Scene:updateConfig(config)
 end
 
 --|-----------------------------------------------------------------------------
---| Scene event functions
+--| Callback functions
 --|-----------------------------------------------------------------------------
+-- All callback functions are intended to be overridden by the user. These all start with the word "on" to help distinguish them from the corresponding event methods, which should NOT be overridden. These callbacks are not intended to be called directly by the user's code; instead, the event methods are used to call these callbacks at the appropriate times.
 
----Called while the scene is starting up.  
--- This can be overridden with game-specific functionality, for example,
--- building the initial entities. Call finishStarting() to finish the starting
--- process, after which this function will no longer be called.
-function Scene:whileStarting(dt)
-    c('rt,rn')
-    self:finishStarting()
+---Callback used for setting up the scene.
+-- Setup occurs AFTER initialization but BEFORE any updates or drawing. The allows the user to, for example, initialize a scene before loading any startup data or assets.
+function Scene:onSetup(...)
+
 end
 
----Called once while starting up.
-function Scene:onStart()
-    c('rt')
+---Callback used for tearing down the scene.
+-- This allows the user to release various data from the scene when it is no longer needed. It could also be used as a way to restart the scene by calling setup() again after tearDown().
+function Scene:onTearDown(...)
+
 end
 
----Completes the startup process.
-function Scene:finishStarting()
-    c('rt')
-    self._startState = 'started'
-    return self
+---Callback used for updating the scene.
+function Scene:onUpdate(dt)
+
 end
 
----Checks if the scene is starting.
-function Scene:isStarting()
-    c('rt')
-    return self._startState == 'starting'
+---Callback used for drawing operations.
+function Scene:onDraw()
+
 end
 
----Checks if the scene has already started.
-function Scene:isStarted()
-    c('rt')
-    return self._startState == 'started'
+---Callback for handling key pressed events.
+function Scene:onKeyPressed(key, scancode, isrepeat)
+
 end
 
----Call this to begin the pause process.  
--- When a scene is paused, its update callback is not called, preventing any
--- entities from being updated. The scene will still be drawn to the screen.
+---Callback for handling key released events.
+function Scene:onKeyReleased(key, scancode)
+
+end
+
+---Callback for handling when a mouse moves.
+function Scene:onMouseMoved(x, y, dx, dy, istouch)
+
+end
+
+---Callback for handling when a mouse button is pressed.
+function Scene:onMousePressed(x, y, button, istouch, presses)
+
+end
+
+---Callback for handling when a mouse button is released.
+function Scene:onMouseReleased(x, y, button, istouch, presses)
+
+end
+
+---Callback for handling when a mouse wheel is moved.
+function Scene:onWheelMoved(x, y)
+
+end
+
+---A callback that handles arbitrary events for the scene (i.e. from Scene:emit()).
+function Scene:onEvent(event, ...)
+
+end
+
+--|-----------------------------------------------------------------------------
+--| Event methods
+--|-----------------------------------------------------------------------------
+-- These methods trigger various events and state changes for the scene. Most of these are intended to be called from the owning engine instance, but some, like pause() and hide(), are used to change the scene's pause and visibility states.
+
+---Sets up the scene manually by calling onSetup().
+-- This will only call onSetup() once. In order to run setup() again, the user must first call tearDown().
+function Scene:setup(...)
+    if not self._isSetup then
+        local ok, err = self:onSetup(...)
+        self._isSetup = true
+        return ok, err
+    end
+    return true
+end
+
+---Tears down the scene by calling onTearDown().
+function Scene:tearDown(...)
+    if self._isSetup then
+        local ok, err = self:onTearDown(...)
+        self._isSetup = false
+        return ok, err
+    end
+    return true
+end
+
+---Returns true if the scene has been setup already, otherwise false.
+function Scene:isSetup()
+    return self._isSetup
+end
+
+---Pauses the scene, preventing any further updates.
 function Scene:pause()
     c('rt')
-    if self._pauseState == 'running' then
-        self._pauseState = 'pausing'
-        self._onPauseFlag = false
-    end
+    self._isPaused = true
     return self
 end
 
----Called when a scene is about to be paused.  
--- This can be overridden with game-specific functionality. Make sure to call
--- finishPausing() to finish the pausing process, after which this function will
--- stop being called.
-function Scene:whilePausing(dt)
-    c('rt,rn')
-    self:finishPausing()
-end
-
----Called once when scene is paused.
-function Scene:onPause()
-    c('rt')
-end
-
----Completes the pausing process.
-function Scene:finishPausing()
-    c('rt')
-    if self._pauseState == 'pausing' then
-        self._pauseState = 'paused'
-    end
-    return self
-end
-
----Call this to begin resuming the scene.
+---Resumes the scene from a paused state, allowing updates to continue.
 function Scene:resume()
     c('rt')
-    if self._pauseState == 'paused' then
-        self._pauseState = 'resuming'
-        self._onResumeFlag = false
-    end
-    return self
-end
-
----Called when a scene is about to resume.
-function Scene:whileResuming(dt)
-    c('rt,rn')
-    self:finishResuming()
-end
-
----Called once when resuming.
-function Scene:onResume()
-    c('rt')
-end
-
----Call this to finish the resuming process.
-function Scene:finishResuming()
-    c('rt')
-    if self._pauseState == 'resuming' then
-        self._pauseState = 'running'
-    end
+    self._isPaused = false
     return self
 end
 
 ---Toggle the paused/running state of the scene.
 function Scene:togglePause()
     c('rt')
-    if self:isPaused() then
-        self:resume()
-    elseif self:isRunning() then
-        self:pause()
-    end
+    self._isPaused = not self._isPaused
     return self
 end
 
----Check if the scene is pausing.
-function Scene:isPausing()
-    c('rt')
-    return self._pauseState == 'pausing'
-end
-
----Check if the scene is paused.
+---Returns true if scene is currently paused, otherwise false.
 function Scene:isPaused()
-    c('rt')
-    return self._pauseState == 'paused'
+    return self._isPaused
 end
 
----Check if the scene is running.
-function Scene:isRunning()
-    c('rt')
-    return self._pauseState == 'running'
-end
-
----Check if the scene is resuming.
-function Scene:isResuming()
-    c('rt')
-    return self._pauseState == 'resuming'
-end
-
----Call this to begin the hiding process.  
--- When a scene is hidden, it is no longer drawn to the screen. The entities
--- will still be updated in the background (unless the scene is also paused).
+---Hides the scene, preventing any graphics from being rendered.
 function Scene:hide()
     c('rt')
-    if self._visibleState == 'visible' then
-        self._visibleState = 'hiding'
-        self._onHideFlag = false
-    end
+    self._isVisible = false
     return self
 end
 
----Called when a scene is about to be hidden.  
--- This can be overridden with game-specific functionality. Make sure to call
--- finishHiding() to finish the hiding process, after which this function will
--- stop being called.
-function Scene:whileHiding(dt)
-    c('rt,rn')
-    self:finishHiding()
-end
-
----Called once while hiding the scene.
-function Scene:onHide()
-    c('rt')
-end
-
----Call this to finish the hiding process.
-function Scene:finishHiding()
-    c('rt')
-    self._visibleState = 'invisible'
-    return self
-end
-
----Call this to show the scene.
+---Shows the scene, allowing graphics to be rendered again after hiding.
 function Scene:show()
     c('rt')
-    if self._visibleState == 'invisible' then
-        self._visibleState = 'showing'
-        self._onShowFlag = false
-    end
-    return self
-end
-
----Called while showing the scene.
-function Scene:whileShowing(dt)
-    c('rt,rn')
-    self:finishShowing()
-end
-
----Called once when the scene is showing.
-function Scene:onShow()
-    c('rt')
-end
-
----Call this to finish the showing process.
-function Scene:finishShowing()
-    c('rt')
-    if self._visibleState == 'showing' then
-        self._visibleState = 'visible'
-    end
+    self._isVisible = true
     return self
 end
 
 ---Toggles the visibility (hide/show) state of the scene.
 function Scene:toggleVisibility()
     c('rt')
-    if self:isVisible() then
-        self:hide()
-    elseif self:isInvisible() then
-        self:show()
-    end
+    self._isVisible = not self._isVisible
     return self
 end
 
----Checks if the scene is visble.
+---Returns true if scene is currently visible, otherwise returns false.
 function Scene:isVisible()
-    c('rt')
-    return self._visibleState == 'visible'
+    return self._isVisible
 end
 
----Checks if the scene is invisible.
-function Scene:isInvisible()
-    c('rt')
-    return self._visibleState == 'invisible'
+---Allows input events (e.g. keys, mouse) to be handled by this scene.
+function Scene:enableInput()
+    self._isInputEnabled = true
+    return self
 end
 
----Checks if the scene is showing.
-function Scene:isShowing()
-    c('rt')
-    return self._visibleState == 'showing'
+---Disables input events (e.g. keys, mouse) from being handled by this scene.
+function Scene:disableInput()
+    self._isInputEnabled = false
+    return self
 end
 
----Checks if the scene is hiding.
-function Scene:isHiding()
-    c('rt')
-    return self._visibleState == 'hiding'
+---Toggles the input enable/disable state.
+function Scene:toggleInput()
+    self._isInputEnabled = not self._isInputEnabled
+    return self
 end
 
----Called every update frame.
-function Scene:onUpdate(dt)
-
+---Returns true if inputs are enabled, otherwise false.
+function Scene:isInputEnabled()
+    return self._isInputEnabled
 end
 
 ---Updates the scene.
 function Scene:update(dt)
     c('rt,rn')
-    if not self._onStartFlag then
-        self:onStart()
-        self._onStartFlag = true
+    local ok, err = self:setup()
+    if not ok and err then
+        self.engine:log(err)
     end
-    if self._startState == 'starting' then
-        self:whileStarting(dt)
-    end
-    if self._pauseState == 'pausing' then
-        if not self._onPauseFlag then
-            self:onPause()
-            self._onPauseFlag = true
+    if not self._isPaused then
+        local ok, err = self:onUpdate(dt)
+        if not ok and err then
+            self.engine:log(err)
         end
-        self:whilePausing(dt)
-    end
-    if self._pauseState == 'resuming' then
-        if not self._onResumeFlag then
-            self:onResume()
-            self._onResumeFlag = true
+        --Remove entities flagged with removeEntDelayed()
+        for i, id in ipairs(self.removedEnts) do
+            self:removeEnt(id)
         end
-        self:whileResuming(dt)
+        util.clearTable(self.removedEnts)
     end
-    if self._visibleState == 'hiding' then
-        if not self._onHideFlag then
-            self:onHide()
-            self._onHideFlag = true
-        end
-        self:whileHiding(dt)
-    end
-    if self._visibleState == 'showing' then
-        if not self._onShowFlag then
-            self:onShow()
-            self._onShowFlag = true
-        end
-        self:whileShowing(dt)
-    end
-    if self._pauseState == 'pausing' or self._pauseState == 'running' then
-        self:onUpdate(dt)
-    end
-    --Remove entities flagged with removeEntDelayed()
-    for i, id in ipairs(self.removedEnts) do
-        self:removeEnt(id)
-    end
-    util.clearTable(self.removedEnts)
-end
-
----Called every draw frame.
-function Scene:onDraw()
-
+    return true
 end
 
 ---Draws the scene to the screen.
 function Scene:draw()
     c('rt')
-    local isVisible = self._visibleState == 'visible' 
-        or self._visibleState == 'hiding'
-        or self._visibleState == 'showing'
-    if isVisible then
-        self:onDraw()
+    local ok, err = self:setup()
+    if not ok and err then
+        self.engine:log(err)
     end
-end
-
----Called every time a key is pressed.
-function Scene:onKeyPressed(key, scancode, isrepeat)
-
+    if self._isVisible then
+        local ok, err = self:onDraw()
+        if not ok and err then
+            self.engine:log(err)
+        end
+    end
+    return true
 end
 
 ---Handles key pressed logic for the scene.
 function Scene:keyPressed(key, scancode, isrepeat)
     c('rt,rs,rs,rb')
-    self:onKeyPressed(key, scancode, isrepeat)
-end
-
----Called every time a key is released.
-function Scene:onKeyReleased(key, scancode)
-
+    if self._isInputEnabled then
+        local consumed, err = self:onKeyPressed(key, scancode, isrepeat)
+        if err then
+            self.engine:log(err)
+        end
+        return consumed
+    end
+    return false
 end
 
 ---Handles key release logic for the scene.
 function Scene:keyReleased(key, scancode)
     c('rt,rs,rs')
-    self:onKeyReleased(key, scancode)
+    if self._isInputEnabled then
+        local consumed, err = self:onKeyReleased(key, scancode)
+        if err then
+            self.engine:log(err)
+        end
+        return consumed
+    end
+    return false
 end
 
-function Scene:onMouseMoved(x, y, dx, dy, istouch)
-
-end
-
+---Handles mouse moved logic for the scene.
 function Scene:mouseMoved(x, y, dx, dy, istouch)
     c('rt,rn,rn,rn,rn,rb')
-    self:onMouseMoved(x, y, dx, dy, istouch)
+    if self._isInputEnabled then
+        local consumed, err = self:onMouseMoved(x, y, dx, dy, istouch)
+        if err then
+            self.engine:log(err)
+        end
+        return consumed
+    end
+    return false
 end
 
-function Scene:onMousePressed(x, y, button, istouch, presses)
-
-end
-
+---Handles mouse button pressed logic for the scene.
 function Scene:mousePressed(x, y, button, istouch, presses)
     c('rt,rn,rn,rn,rb,rn')
-    self:onMousePressed(x, y, button, istouch, presses)
+    if self._isInputEnabled then
+        local consumed, err = self:onMousePressed(x, y, button, istouch, presses)
+        if err then
+            self.engine:log(err)
+        end
+        return consumed
+    end
+    return false
 end
 
-function Scene:onMouseReleased(x, y, button, istouch, presses)
-
-end
-
+---Handles mouse button released logic for the scene.
 function Scene:mouseReleased(x, y, button, istouch, presses)
     c('rt,rn,rn,rn,rb,rn')
-    self:onMouseReleased(x, y, button, istouch, presses)
+    if self._isInputEnabled then
+        local consumed, err = self:onMouseReleased(x, y, button, istouch, presses)
+        if err then
+            self.engine:log(err)
+        end
+        return consumed
+    end
+    return false
 end
 
-function Scene:onWheelMoved(x, y)
-
-end
-
+---Handles mouse wheel moved logic for the scene.
 function Scene:wheelMoved(x, y)
     c('rt,rn,rn')
-    self:onWheelMoved(x, y)
+    if self._isInputEnabled then
+        local consumed, err = self:onWheelMoved(x, y)
+        if err then
+            self.engine:log(err)
+        end
+        return consumed
+    end
+    return false
 end
 
 ---Emits a scene event.
@@ -432,12 +353,8 @@ function Scene:emit(event, ...)
     return true
 end
 
----A callback that handles arbitrary events for the scene.
--- This method is intended to be overridden by the user. It is called anytime emit() is called, passing the corresponding event identifier and arguments.
-function Scene:onEvent(event, ...)
-
-end
-
+---Registers a function as an event handler for an event ID.
+-- NOTE: because registered event handlers can affect the scene's logic at runtime (and potentially creating hard-to-find bugs), using them is generally not recommended. Consider using the onEvent() callback instead.
 function Scene:registerEventHandler(event, idx, handler)
     c('rt,rs,rn|f|t,f|t')
     if handler == nil then
@@ -456,6 +373,7 @@ function Scene:registerEventHandler(event, idx, handler)
     return idx or #self._eventHandlers[event]
 end
 
+---Removes a previously registered event handler.
 function Scene:removeEventHandler(event, idx)
     c('rt,rs,n')
     if self._eventHandlers[event] then
@@ -463,7 +381,6 @@ function Scene:removeEventHandler(event, idx)
     end
     return true
 end
---------------------------------------------------------------------------------
 
 --|-----------------------------------------------------------------------------
 --| Entity/component handling functions
@@ -514,6 +431,9 @@ function Scene:addEnt(source, id, context)
                 if not com then print(err) end
             end
         end
+    else
+        --Because entity IDs are only stored in the component tables, adding an ID without a source table doesn't actually do anything. This is probably not what the user intended, so log a warning.
+        self.engine:log(Exception(('Entity id %s added without a source table.'):format(id)))
     end
     self:emit('addedEnt', id)
     return id
