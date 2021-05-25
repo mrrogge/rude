@@ -174,7 +174,7 @@ function Engine:keyPressed(key, scancode, isrepeat)
     if self.config.sceneMode == 'single' then
         local scene = self:getTopScene()
         if scene then
-            local consumed, err = scene:keypressed(key, scancode, isrepeat)
+            local consumed, err = scene:keyPressed(key, scancode, isrepeat)
             if not consumed and err then
                 self:log(err)
             end
@@ -182,7 +182,7 @@ function Engine:keyPressed(key, scancode, isrepeat)
     elseif self.config.sceneMode == 'multi' then
         local consumed, err
         for i=#self._sceneStack, 1, -1 do
-            consumed, err = self._sceneStack[i]:keypressed(key, scancode, 
+            consumed, err = self._sceneStack[i]:keyPressed(key, scancode, 
                 isrepeat)
             if err then
                 self:log(err)
@@ -202,7 +202,7 @@ function Engine:keyReleased(key, scancode)
     if self:getSceneStackSize() == 0 then return end
     local scene = self:getTopScene()
     if scene then
-        scene:keyreleased(key, scancode)
+        scene:keyReleased(key, scancode)
     end
 end
 
@@ -211,7 +211,7 @@ function Engine:mouseMoved(x, y, dx, dy, istouch)
     if self:getSceneStackSize() == 0 then return end
     local scene = self:getTopScene()
     if scene then
-        scene:mousemoved(x, y, dx, dy, istouch)
+        scene:mouseMoved(x, y, dx, dy, istouch)
     end
 end
 
@@ -220,7 +220,7 @@ function Engine:mousePressed(x, y, button, istouch, presses)
     if self:getSceneStackSize() == 0 then return end
     local scene = self:getTopScene()
     if scene then
-        scene:mousepressed(x, y, button, istouch, presses)
+        scene:mousePressed(x, y, button, istouch, presses)
     end
 end
 
@@ -229,7 +229,7 @@ function Engine:mouseReleased(x, y, button, istouch, presses)
     if self:getSceneStackSize() == 0 then return end
     local scene = self:getTopScene()
     if scene then
-        scene:mousereleased(x, y, button, istouch, presses)
+        scene:mouseReleased(x, y, button, istouch, presses)
     end
 end
 
@@ -238,7 +238,7 @@ function Engine:wheelMoved(x, y)
     if self:getSceneStackSize() == 0 then return end
     local scene = self:getTopScene()
     if scene then
-        scene:wheelmoved(x, y)
+        scene:wheelMoved(x, y)
     end
 end
 

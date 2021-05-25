@@ -25,7 +25,6 @@ local function fontAssetLoader(id)
             end
         end
     end
-    print(fileName, size, hinting, dpiScale, imageFileName)
     if fileName and imageFileName then
         return love.graphics.newFont(fileName, imageFileName)
     elseif fileName then
