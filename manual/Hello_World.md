@@ -1,5 +1,5 @@
 # Hello World!
-Here is a basic example demonstrating the use of `rude`. 
+Here is a basic example using the `rude` framework. 
 
 ```lua
 local rude = require('rude')

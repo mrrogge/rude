@@ -2,14 +2,13 @@ file = {
     'rude',
     exclude={
         'rude/.luarocks',
-        'rude/lua_modules',
-        'rude/lib'
+        'rude/lua_modules'
     }
 }
 
 dir='doc'
 
-format='markdown'
+format='lunamark'
 
 topics='manual'
 kind_names={

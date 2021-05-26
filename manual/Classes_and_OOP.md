@@ -11,12 +11,17 @@ function MyComponent:initialize(foo, bar)
 end
 ```
 
-Custom scene classes can be defined by subclassing `rude.Scene`:
+Custom scene classes can be defined by subclassing `rude.Scene`. Custom callbacks can then be defined for each specific scene class. For example:
 
 ```lua
 local MyScene = rude.Scene:subclass('MyScene')
 
+function MyScene:initialize(engine)
+    rude.Scene.initialize(self, engine)    --note how the Scene base class's initialize method is called here.
+    -- add additional initialization logic here
+end
+
 function MyScene:onUpdate(dt)
-    -- update logic goes here
+    -- custom update logic goes here
 end
 ```

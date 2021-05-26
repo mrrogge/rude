@@ -8,5 +8,17 @@ Components are the containers of data for entities in a scene. In `rude`, these 
 You can add a component for a given entity ID by calling `Scene:addCom()`:
 
 ```lua
+local engine = rude()
+local scene = engine:newScene()
+local ExampleComponent = rude.RudeObject:subclass('ExampleComponent')
 
-``
+scene:addCom('exampleId', ExampleComponent)
+```
+
+You can use `Scene:getCom()` to retrieve a component from an entity:
+
+```lua
+local exampleCom = scene:getCom('exampleId', ExampleComponent)
+```
+
+Note that `getCom()` returns a reference to the _actual_ component instance, not a copy.

@@ -2,7 +2,7 @@
 
 ## What is `rude`?
 
-`rude` is an ECS framework written in Lua. It is primarily intended for games but can be used for any lua v5.1+ application. It provides a nice abstraction layer that handles entity management, pooling, and other lower-level stuff, allowing you to focus on the fun parts of your program.
+`rude` is an ECS framework written in Lua. It is primarily intended for games but can be used in any lua v5.1+ application. It provides a nice abstraction layer that handles entity management, pooling, and other lower-level stuff, allowing you to focus on the fun parts of your program.
 
 Some notable features are:
 * Supports multiple scenes with independent entities and systems. Scenes can run one at a time or simultaneously.
