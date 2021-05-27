@@ -6,7 +6,7 @@ local bitserPlugin = require('rude.plugins.bitserPlugin')
 local DataContext = require('rude.DataContext')
 local dkjsonPlugin = require('rude.plugins.dkjsonPlugin')
 local Exception = require('rude.Exception')
-local log = require('rude.log')
+local logging = require('rude.logging')
 local lovePlugin = require('rude.plugins.lovePlugin')
 local MissingComClassException = require('rude.MissingComClassException')
 local MissingComException = require('rude.MissingComException')
@@ -16,6 +16,7 @@ local Scene = require('rude.Scene')
 local stdPlugin = require('rude.plugins.stdPlugin')
 local Sys = require('rude.Sys')
 local TablePool = require('rude.TablePool')
+local TypeError = require('rude.TypeError')
 local util = require('rude.util')
 
 local Engine = RudeObject:subclass('Engine')
@@ -27,6 +28,7 @@ function Engine:initialize(config)
     self.DataContext = DataContext
     self.Engine = Engine
     self.Exception = Exception
+    self.logging = logging
     self.MissingComClassException = MissingComClassException
     self.MissingComException = MissingComException
     self.plugins = {
@@ -42,21 +44,10 @@ function Engine:initialize(config)
     self.TablePool = TablePool
     self.util = util
 
-    self.config = {
-        updateStep = -1,
-        user = {}
-    }
-    if config then
-        self:importConfig(config)
-    end
-
     self.dataContext = DataContext()
     self.currentContext = self.dataContext
-    self.scripts = {}
 
     --private members
-    self._initCallbacks = {}
-    self._attached = false
     self._dt = 0
     --scene stuff
     self._scenes = {}
@@ -65,8 +56,54 @@ function Engine:initialize(config)
     self._importCache = {}
     self._currentLoggerId = nil
 
+    --set configuration
+    self.config = {
+        updateStep = -1,
+        maxStep = -1,
+        sceneMode = 'single',
+
+        user = {}
+    }
+    if config then
+        self:updateConfig(config)
+    end
+
     self:usePlugin(stdPlugin)
 
+    return self
+end
+
+function Engine:updateConfig(config)
+    c('rt,rt')
+    if config.updateStep then
+        if type(config.updateStep) ~= 'number' then
+            self:log(TypeError(config.updateStep, 'config.updateStep', 'number'))
+        else
+            self.config.updateStep = config.updateStep
+        end
+    end
+    if config.maxStep then
+        if type(config.maxStep) ~= 'number' then
+            self:log(TypeError(config.maxStep, 'config.maxStep', 'number'))
+        else
+            self.config.maxStep = config.maxStep
+        end
+    end
+    if config.sceneMode then
+        local sceneMode = tostring(config.sceneMode)
+        if sceneMode == 'single' or sceneMode == 'multi' then
+            self.config.sceneMode = sceneMode
+        else
+            self:log(ValueError('config.sceneMode must be one of: single|multi.'))
+        end
+    end
+    if config.user then
+        if type(config.user) ~= 'table' then
+            self:log(TypeError(config.user, 'config.user', 'table'))
+        else
+            self:mergeData(config.user, self.config.user)
+        end
+    end
     return self
 end
 
@@ -76,19 +113,34 @@ end
 
 ---Callback function that is called once when the game is loaded.
 function Engine:load(...)
-    c('rt')
+    self:onLoad(...)
+end
+
+function Engine:onLoad(...)
+
 end
 
 local function updateScenes(self, dt)
     c('rt,rn')
-    for i=#self._sceneStack, 1, -1 do
-        self._sceneStack[i]:update(dt)
+    if self.config.sceneMode == 'multi' then
+        for i=#self._sceneStack, 1, -1 do
+            self._sceneStack[i]:update(dt)
+        end
+    elseif self.config.sceneMode == 'single' then
+        if #self._sceneStack > 0 then
+            self._sceneStack[#self._sceneStack]:update(dt)
+        end
+    else
+        self:log(ValueError('unknown value %s for config.sceneMode.'):format(self.config.sceneMode))
     end
 end
 
 ---Callback function that is called each update frame.
 function Engine:update(dt)
     c('rt,rn')
+    if self.config.maxStep > 0 then
+        dt = math.min(dt, self.config.maxStep)
+    end
     if self.config.updateStep > 0 then
         self._dt = self._dt + dt
         while self._dt >= self.config.updateStep do
@@ -103,18 +155,44 @@ end
 ---Callback function that is called each draw frame.
 function Engine:draw()
     c('rt')
-    for i=#self._sceneStack, 1, -1 do
-        self._sceneStack[i]:draw()
+    if self.config.sceneMode == 'multi' then
+        for i=#self._sceneStack, 1, -1 do
+            self._sceneStack[i]:draw()
+        end
+    elseif self.config.sceneMode == 'single' then
+        if #self._sceneStack > 0 then
+            self._sceneStack[#self._sceneStack]:draw()
+        end
+    else
+        self:log(ValueError('unknown value %s for config.sceneMode.'):format(self.config.sceneMode))
     end
 end
 
 ---Callback function that is called each time a key is pressed.
 function Engine:keyPressed(key, scancode, isrepeat)
     c('rt,rs,rs,rb')
-    if self:getSceneStackSize() == 0 then return end
-    local scene = self:getTopScene()
-    if scene then
-        scene:keypressed(key, scancode, isrepeat)
+    if self.config.sceneMode == 'single' then
+        local scene = self:getTopScene()
+        if scene then
+            local consumed, err = scene:keyPressed(key, scancode, isrepeat)
+            if not consumed and err then
+                self:log(err)
+            end
+        end
+    elseif self.config.sceneMode == 'multi' then
+        local consumed, err
+        for i=#self._sceneStack, 1, -1 do
+            consumed, err = self._sceneStack[i]:keyPressed(key, scancode, 
+                isrepeat)
+            if err then
+                self:log(err)
+            end
+            if consumed then
+                break
+            end
+        end
+    else
+        self:log(ValueError('unknown value %s for config.sceneMode.'):format(self.config.sceneMode))
     end
 end
 
@@ -124,7 +202,7 @@ function Engine:keyReleased(key, scancode)
     if self:getSceneStackSize() == 0 then return end
     local scene = self:getTopScene()
     if scene then
-        scene:keyreleased(key, scancode)
+        scene:keyReleased(key, scancode)
     end
 end
 
@@ -133,7 +211,7 @@ function Engine:mouseMoved(x, y, dx, dy, istouch)
     if self:getSceneStackSize() == 0 then return end
     local scene = self:getTopScene()
     if scene then
-        scene:mousemoved(x, y, dx, dy, istouch)
+        scene:mouseMoved(x, y, dx, dy, istouch)
     end
 end
 
@@ -142,7 +220,7 @@ function Engine:mousePressed(x, y, button, istouch, presses)
     if self:getSceneStackSize() == 0 then return end
     local scene = self:getTopScene()
     if scene then
-        scene:mousepressed(x, y, button, istouch, presses)
+        scene:mousePressed(x, y, button, istouch, presses)
     end
 end
 
@@ -151,7 +229,7 @@ function Engine:mouseReleased(x, y, button, istouch, presses)
     if self:getSceneStackSize() == 0 then return end
     local scene = self:getTopScene()
     if scene then
-        scene:mousereleased(x, y, button, istouch, presses)
+        scene:mouseReleased(x, y, button, istouch, presses)
     end
 end
 
@@ -160,7 +238,7 @@ function Engine:wheelMoved(x, y)
     if self:getSceneStackSize() == 0 then return end
     local scene = self:getTopScene()
     if scene then
-        scene:wheelmoved(x, y)
+        scene:wheelMoved(x, y)
     end
 end
 
@@ -180,17 +258,18 @@ end
 
 ---Creates a new scene and registers it.
 -- cls lets you specify the specific scene class to build.
-function Engine:newScene(id, cls, ...)
-    c('rt,rn|s,t')
+function Engine:newScene(id, cls, config)
+    c('rt,rn|s,t,t')
     cls = cls or Scene
-    local scene = cls(self, ...)
+    local scene = cls(self, config)
     self._scenes[id] = scene
+    self:pushScene(id)
     return scene
 end
 
 ---Registers a scene object to the engine with the specified id.
 function Engine:registerScene(id, scene)
-    c('rt,rn|s,t')
+    c('rt,rn|s,rt')
     --registers a new scene
     self._scenes[id] = scene
     return self
@@ -214,7 +293,11 @@ end
 -- If no scene exists, an error will be raised. Use sceneExists() to test if a scene exists or not.
 function Engine:getScene(id)
     c('rt,rn|s')
-    return self._scenes[id]
+    local scene = self._scenes[id]
+    if not scene then
+        return nil, Exception(('Scene %s does not exist.'):format(id))
+    end
+    return scene
 end
 
 ---Returns the number of scenes currently on the stack.

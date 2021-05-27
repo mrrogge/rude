@@ -6,7 +6,7 @@ local util = require('rude.util')
 local TypeError = Exception:subclass('TypeError')
 
 function TypeError:initialize(subject, desc, ...)
-    subjectType = type(subject)
+    local subjectType = type(subject)
     desc = desc or '<undefined>'
     desc = tostring(desc)
     local validTypes = util.concat('|', ...)

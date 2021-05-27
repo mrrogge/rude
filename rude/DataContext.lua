@@ -2,7 +2,7 @@ local contract = require('rude._contract')
 local RudeObject = require('rude.RudeObject')
 local Exception = require('rude.Exception')
 local MissingComClassException = require('rude.MissingComClassException')
-local log = require('rude.log')
+local logging = require('rude.logging')
 
 local DataContext = RudeObject:subclass('DataContext')
 
@@ -119,7 +119,7 @@ end
 function DataContext:getDataDecoder(id)
     contract('rt,rs')
     if not self.dataDecoders[id] then
-        return nil, ('No data decoder registered for ID %s.'):format(id)
+        return nil, Exception(('No data decoder registered for ID %s.'):format(id))
     end
     return self.dataDecoders[id]
 end
@@ -135,13 +135,13 @@ end
 function DataContext:getDataEncoder(id)
     contract('rt,rs')
     if not self.dataEncoders[id] then
-        return nil, ('No data encoder registered for ID %s.'):format(id)
+        return nil, Exception(('No data encoder registered for ID %s.'):format(id))
     end
     return self.dataEncoders[id]
 end
 
 function DataContext:registerLogger(id, fnc, minSeverity)
-    self.loggers[id] = log.Logger(fnc, minSeverity)
+    self.loggers[id] = logging.Logger(fnc, minSeverity)
     return self.loggers[id]
 end
 
