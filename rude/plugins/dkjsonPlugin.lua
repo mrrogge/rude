@@ -1,4 +1,9 @@
----Provides support for JSON encoding/decoding via the dkjson library.
+---Provides support for JSON encoding/decoding via the `dkjson` library.
+-- `dkjson` can be found here: [http://dkolf.de/src/dkjson-lua.fsl/home](http://dkolf.de/src/dkjson-lua.fsl/home).
+-- 
+-- It can also be installed via `luarocks`: 
+--     luarocks install dkjson
+-- @module plugins.dkjsonPlugin
 
 local jsonFound, json = pcall(require, 'dkjson')
 
@@ -48,6 +53,9 @@ local function encoder(input, path)
     end
 end
 
+---Applies this plugin to an engine.
+-- @function __call
+-- @tparam rude.Engine engine The targeted engine.
 return function(engine, context)
     if not jsonFound then
         error('This plugin requires the dkjson module to run correctly.')

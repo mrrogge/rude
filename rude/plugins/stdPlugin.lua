@@ -1,4 +1,6 @@
--- This plugin applies some basic additions to an Engine or DataContext instance. All engines automatically use this plugin by default.
+---Applies some basic context to an engine. 
+-- All engines automatically use this plugin by default.
+-- @module plugins.stdPlugin
 
 local util = require('rude.util')
 
@@ -45,6 +47,9 @@ local luaStringEncoder = function(input, path)
     end
 end
 
+---Applies this plugin to an engine.
+-- @function __call
+-- @tparam rude.Engine engine The targeted engine.
 local plugin = function(engine, context)
     engine:registerDataDecoder('require', requireDecoder, context)
     engine:registerDataDecoder('lua-string', luaStringDecoder, context)

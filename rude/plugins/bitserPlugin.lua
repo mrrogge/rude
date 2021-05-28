@@ -1,10 +1,11 @@
----Provides support for binary encoding/decoding with the bitser external library.
--- bitser can be found here: [https://github.com/gvx/bitser](https://github.com/gvx/bitser).
+---Provides support for binary encoding/decoding with the `bitser` external library.
+-- `bitser` can be found here: [https://github.com/gvx/bitser](https://github.com/gvx/bitser).
+-- @module plugins.bitserPlugin
 
 local contract = require('rude._contract')
 local bitserFound, bitser = pcall(require, 'bitser')
 
----Decodes a bitser string input and returns the result if successful, otherwise returns nil and an error message.
+-- Decodes a bitser string input and returns the result if successful, otherwise returns nil and an error message.
 local function bitserStringDecoder(input)
     contract('rs')
     local ok, result = pcall(bitser.loads, input)
@@ -15,7 +16,7 @@ local function bitserStringDecoder(input)
     end
 end
 
----Decodes bitser data from an external file path and returns the result if successful, otherwise returns nil and an error message.
+-- Decodes bitser data from an external file path and returns the result if successful, otherwise returns nil and an error message.
 local function bitserLoveFileDecoder(path)
     contract('rs')
     local ok, result = pcall(bitser.loadLoveFile, path)
@@ -26,7 +27,7 @@ local function bitserLoveFileDecoder(path)
     end
 end
 
----Encodes Lua data input into a bitser string and optionally writes it to an external file.
+-- Encodes Lua data input into a bitser string and optionally writes it to an external file.
 -- If path is specified, the bitser string is written out to a file at path. Returns true if successful, otherwise returns nil and an error message. Note that LOVE2D is required to write out to a file.
 -- If path is not specified, the input is encoded. The result is returned if successful, otherwise returns nil and an error message.
 local function bitserEncoder(input, path)
@@ -48,6 +49,9 @@ local function bitserEncoder(input, path)
     end
 end
 
+---Applies this plugin to an engine.
+-- @function __call
+-- @tparam rude.Engine engine The targeted engine.
 return function(engine, context)
     if not bitserFound then
         error('This plugin requires the bitser module to run correctly.')

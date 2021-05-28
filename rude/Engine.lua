@@ -22,8 +22,10 @@ local util = require('rude.util')
 local Engine = RudeObject:subclass('Engine')
 
 ---Initializes the object.
+-- @tparam table config a table of configuration values
+-- @return the Engine instance
 function Engine:initialize(config)
-    c('rt,t|s')
+    c('rt,t')
     -- expose the public rude modules to make access easier.
     self.DataContext = DataContext
     self.Engine = Engine
@@ -73,6 +75,9 @@ function Engine:initialize(config)
     return self
 end
 
+---Updates the configuration values
+-- @tparam table config a table of configuration values
+-- @return the Engine instance
 function Engine:updateConfig(config)
     c('rt,rt')
     if config.updateStep then
@@ -111,11 +116,13 @@ end
 --| Default Callbacks
 --|-----------------------------------------------------------------------------
 
----Callback function that is called once when the game is loaded.
+---Intended to be called when the program loads.
+-- @param ... parameters passed to onLoad()
 function Engine:load(...)
     self:onLoad(...)
 end
 
+---A callback function for specifying custom logic on load.
 function Engine:onLoad(...)
 
 end
@@ -135,7 +142,8 @@ local function updateScenes(self, dt)
     end
 end
 
----Callback function that is called each update frame.
+---Advances the engine by a given timestep.
+-- @tparam number dt the timestep in seconds.
 function Engine:update(dt)
     c('rt,rn')
     if self.config.maxStep > 0 then
@@ -152,7 +160,7 @@ function Engine:update(dt)
     end
 end
 
----Callback function that is called each draw frame.
+---Renders the engine to the screen.
 function Engine:draw()
     c('rt')
     if self.config.sceneMode == 'multi' then
@@ -168,13 +176,16 @@ function Engine:draw()
     end
 end
 
----Callback function that is called each time a key is pressed.
-function Engine:keyPressed(key, scancode, isrepeat)
+---Passes a key press event to the engine.
+-- @tparam string key character of the pressed key.
+-- @tparam string scancode the scancode representing the pressed key.
+-- @tparam bool isRepeat whether this keypress event is a repeat. The delay between key repeats depends on the user's system settings.
+function Engine:keyPressed(key, scancode, isRepeat)
     c('rt,rs,rs,rb')
     if self.config.sceneMode == 'single' then
         local scene = self:getTopScene()
         if scene then
-            local consumed, err = scene:keyPressed(key, scancode, isrepeat)
+            local consumed, err = scene:keyPressed(key, scancode, isRepeat)
             if not consumed and err then
                 self:log(err)
             end
@@ -183,7 +194,7 @@ function Engine:keyPressed(key, scancode, isrepeat)
         local consumed, err
         for i=#self._sceneStack, 1, -1 do
             consumed, err = self._sceneStack[i]:keyPressed(key, scancode, 
-                isrepeat)
+                isRepeat)
             if err then
                 self:log(err)
             end
@@ -196,7 +207,9 @@ function Engine:keyPressed(key, scancode, isrepeat)
     end
 end
 
----Callback function that is called each time a key is released.
+---Passes a key released event to the engine.
+-- @tparam string key character of the pressed key.
+-- @tparam string scancode the scancode representing the pressed key.
 function Engine:keyReleased(key, scancode) 
     c('rt,rs,rs')
     if self:getSceneStackSize() == 0 then return end
@@ -206,33 +219,54 @@ function Engine:keyReleased(key, scancode)
     end
 end
 
-function Engine:mouseMoved(x, y, dx, dy, istouch)
+---Passes a mouse move event to the engine.
+-- @tparam number x the mouse position on the x axis
+-- @tparam number y the mouse position on the y axis
+-- @tparam number dx the amount moved on the x axis since the last time this method was called
+-- @tparam number dy the amount moved on the y axis since the last time this method was called
+-- @tparam bool isTouch true if mouse move originated from a touchscreen device.
+function Engine:mouseMoved(x, y, dx, dy, isTouch)
     c('rt,rn,rn,rn,rn,rb')
     if self:getSceneStackSize() == 0 then return end
     local scene = self:getTopScene()
     if scene then
-        scene:mouseMoved(x, y, dx, dy, istouch)
+        scene:mouseMoved(x, y, dx, dy, isTouch)
     end
 end
 
-function Engine:mousePressed(x, y, button, istouch, presses)
+---Passes a mouse button pressed event to the engine.
+-- @tparam number x the mouse position on the x axis
+-- @tparam number y the mouse position on the y axis
+-- @tparam number button the button index that was pressed. 1 is the primary mouse button, 2 is the secondary mouse button and 3 is the middle button. Further buttons are mouse dependent.
+-- @tparam bool isTouch true if mouse press originated from a touchscreen device
+-- @tparam number presses the number of presses in a short time frame and small area, used to simulate double or triple clicks
+function Engine:mousePressed(x, y, button, isTouch, presses)
     c('rt,rn,rn,rn,rb,rn')
     if self:getSceneStackSize() == 0 then return end
     local scene = self:getTopScene()
     if scene then
-        scene:mousePressed(x, y, button, istouch, presses)
+        scene:mousePressed(x, y, button, isTouch, presses)
     end
 end
 
-function Engine:mouseReleased(x, y, button, istouch, presses)
+---Passes a mouse button released event to the engine.
+-- @tparam number x the mouse position on the x axis
+-- @tparam number y the mouse position on the y axis
+-- @tparam number button the button index that was released. 1 is the primary mouse button, 2 is the secondary mouse button and 3 is the middle button. Further buttons are mouse dependent.
+-- @tparam bool isTouch true if mouse press originated from a touchscreen device
+-- @tparam number presses the number of presses in a short time frame and small area, used to simulate double or triple clicks
+function Engine:mouseReleased(x, y, button, isTouch, presses)
     c('rt,rn,rn,rn,rb,rn')
     if self:getSceneStackSize() == 0 then return end
     local scene = self:getTopScene()
     if scene then
-        scene:mouseReleased(x, y, button, istouch, presses)
+        scene:mouseReleased(x, y, button, isTouch, presses)
     end
 end
 
+---Passes a mouse wheel moved event to the engine.
+-- @tparam number x amount of horizontal mouse wheel movement. Positive values indicate movement to the right.
+-- @tparam number y amount of vertical mouse wheel movement. Positive values indicate upward movement.
 function Engine:wheelMoved(x, y)
     c('rt,rn,rn')
     if self:getSceneStackSize() == 0 then return end
@@ -241,9 +275,6 @@ function Engine:wheelMoved(x, y)
         scene:wheelMoved(x, y)
     end
 end
-
---TODO: add the rest of the callback functions
---------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------
 -- Scene Functions
@@ -256,8 +287,11 @@ local function getScene(self, id)
     return self._scenes[id]
 end
 
----Creates a new scene and registers it.
--- cls lets you specify the specific scene class to build.
+---Creates a new scene instance, registers it to a given id, and pushes it to the top of the stack.
+-- @tparam number|string id the ID for the scene
+-- @tparam[opt] class cls the scene class
+-- @tparam[opt] table config a table of configuration values passed to the scene
+-- @return the new scene instance
 function Engine:newScene(id, cls, config)
     c('rt,rn|s,t,t')
     cls = cls or Scene
@@ -267,7 +301,10 @@ function Engine:newScene(id, cls, config)
     return scene
 end
 
----Registers a scene object to the engine with the specified id.
+---Registers a scene instance to a given id.
+-- @tparam number|string id the ID for the scene
+-- @tparam rude.Scene scene the scene instance
+-- @return the Engine instance
 function Engine:registerScene(id, scene)
     c('rt,rn|s,rt')
     --registers a new scene
@@ -275,7 +312,9 @@ function Engine:registerScene(id, scene)
     return self
 end
 
----Removes a registered scene object from the engine.
+---Removes a registered scene instance.
+-- @tparam number|string id the ID for the scene
+-- @return the Engine instance
 function Engine:unregisterScene(id)
     c('rt,rn|s')
     --removes a scene from the registered scenes
@@ -283,14 +322,17 @@ function Engine:unregisterScene(id)
     return self
 end
 
----Returns true if a scene is registered with the specified id; otherwise false.
+---Tests if a scene already exists for a given id.
+-- @tparam number|string id the ID for the scene
+-- @return true if the scene exists, otherwise false
 function Engine:sceneExists(id)
     c('rt,rn|s')
     return not not self._scenes[id]
 end
 
----Returns the scene object that is registered to the specified id.
--- If no scene exists, an error will be raised. Use sceneExists() to test if a scene exists or not.
+---Returns the scene instance that is registered to the specified id.
+-- @tparam number|string id the ID for the scene
+-- @return the scene instance if it exists, otherwise nil and an exception
 function Engine:getScene(id)
     c('rt,rn|s')
     local scene = self._scenes[id]
@@ -300,28 +342,36 @@ function Engine:getScene(id)
     return scene
 end
 
----Returns the number of scenes currently on the stack.
+---Checks how many scenes are added to the stack.
+-- @treturn number the number of scenes currently on the stack
 function Engine:getSceneStackSize()
     c('rt')
     return #self._sceneStack
 end
 
----Returns true if an scene currently exists in the stack at the specified index (otherwise return false).
+---Checks if a scene exists at a current index on the stack.
+-- @tparam number idx the index number
+-- @treturn bool true if scene exists, otherwise false
 function Engine:sceneExistsAtIndex(idx)
     c('rt,rn')
     return not not self._sceneStack[idx]
 end
 
 ---Returns the top scene in the stack.
--- If no scenes have been added to the stack, an error will be raised.
+-- @treturn rude.Scene the top scene if one exists, otherwise nil and an exception
 function Engine:getTopScene()
     c('rt')
-    local scene = self._sceneStack[#(self._sceneStack)]
-    return scene
+    if #self._sceneStack > 0 then
+        return self._sceneStack[#(self._sceneStack)]
+    else
+        return nil, Exception('No scene exists')
+    end
 end
 
 ---Returns the scene that is the specified offset number from the top.
+-- 
 -- e.g. passing 0 would return the top scene, passing 1 would return the scene 2nd from the top. Passing nothing defaults to 0.
+-- @tparam[opt] number offset the index offset from the top of the stack.
 function Engine:getSceneFromTop(offset)
     c('rt,n')
     offset = offset or 0

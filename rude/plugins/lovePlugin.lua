@@ -1,3 +1,6 @@
+---Provides support for the LÖVE 2D framework.
+-- LÖVE can be found here: [https://love2d.org/](https://love2d.org/).
+
 local c = require('rude._contract')
 
 --an asset loader for fonts
@@ -34,7 +37,9 @@ local function fontAssetLoader(id)
     end
 end
 
---Return the plugin as a function
+---Applies this plugin to an engine.
+-- @function __call
+-- @tparam rude.Engine engine The targeted engine.
 return function(engine, context)
     local missingLoveMsg = 'This plugin requires LÖVE framework v11.0 or newer to run correctly. See: https://love2d.org.'
     if not love then

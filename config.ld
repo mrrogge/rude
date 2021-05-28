@@ -8,9 +8,9 @@ file = {
 
 dir='doc'
 
-format='lunamark'
+format='markdown'
 
-topics='manual'
+--topics='manual'
 kind_names={
     topic='Manual'
 }

@@ -1,3 +1,6 @@
+---Provides additional context and add-ons for engines.
+-- @classmod DataContext
+
 local contract = require('rude._contract')
 local RudeObject = require('rude.RudeObject')
 local Exception = require('rude.Exception')
@@ -6,6 +9,7 @@ local logging = require('rude.logging')
 
 local DataContext = RudeObject:subclass('DataContext')
 
+---Initializes an instance.
 function DataContext:initialize()
     contract('rt', self)
     self.com = {}
@@ -21,7 +25,11 @@ function DataContext:initialize()
 end
 
 ---Registers a component class.
+-- 
 -- By registering a component class to a specific ID, an instance of that class can automatically be built when importing entity data.
+-- @tparam string id The ID for the component class
+-- @tparam class class the component class
+-- @return the DataContext instance
 function DataContext:registerComClass(id, class)
     contract('rt,rs,rt')
     self.com[id] = class
@@ -29,8 +37,9 @@ function DataContext:registerComClass(id, class)
     return self
 end
 
----Returns the registers component class for a given id.
--- If no class exists, returns nil and an error message.
+---Returns the registered component class for a given id.
+-- @tparam string id The ID for the component class.
+-- @return the component class if it exists, otherwise nil and an exception
 function DataContext:getComClass(id)
     contract('rt,rs')
     local class = self.com[id]
@@ -47,7 +56,11 @@ function DataContext:registerClass(class)
 end
 
 ---Registers a function to a given id.
--- By registering a function, systems can call them dynamically based on components referencing their ids.
+-- 
+-- This maps a custom Lua function to a string, allowing the function to be referenced from within component data. This provides a way to change logic dynamically by simply changing data values.
+-- @tparam string id the ID for the function
+-- @tparam function fnc the function
+-- @return the DataContext instance
 function DataContext:registerFunction(id, fnc)
     contract('rt,rs,rf')
     self.functions[id] = fnc
@@ -55,7 +68,8 @@ function DataContext:registerFunction(id, fnc)
 end
 
 ---Returns a registered function for a given id.
--- If no function exists, returns nil and an error message.
+-- @tparam string id the ID for the function
+-- @return the function if it exists, otherwise nil and an exception
 function DataContext:getFunction(id)
     contract('rt,rs')
     local fnc = self.functions[id]
@@ -66,7 +80,11 @@ function DataContext:getFunction(id)
 end
 
 ---Registers an asset loader to a given id.
--- Asset loaders are functions that accept a string argument and build a static asset such as an image or audio clip.
+-- 
+-- Asset loaders are functions that accept a string argument and build a static asset such as an image or audio clip. Asset loaders are assumed to be deterministic, such that a given id value always yields an equivalent corresponding asset.
+-- @tparam string id the ID for the asset loader function
+-- @tparam function loader the asset loader function
+-- @return the DataContext instance
 function DataContext:registerAssetLoader(id, loader)
     contract('rt,rs,rf|t')
     self.assetLoaders[id] = loader
@@ -74,7 +92,8 @@ function DataContext:registerAssetLoader(id, loader)
 end
 
 ---Returns an asset loader for a given id.
--- If loader does not exist, returns nil and an exception.
+-- @tparam string id the ID for the asset loader function
+-- @return the asset loader function if it exists, otherwise nil and an exception
 function DataContext:getAssetLoader(id)
     contract('rt,rs')
     local loader = self.assetLoaders[id]
@@ -85,7 +104,12 @@ function DataContext:getAssetLoader(id)
 end
 
 ---Returns an asset for a given loaderId and assetId.
+-- 
 -- Assets are cached so that repeat calls return the previously built asset. When forceLoad is true, the asset will be built again even if it was already built.
+-- @tparam string loaderId the ID for the asset loader function
+-- @tparam any assetId the ID passed to the asset loader function
+-- @tparam[opt] bool forceLoad forces asset to be re-loaded when true
+-- @return the asset if the loader is valid, otherwise nil and an exception
 function DataContext:getAsset(loaderId, assetId, forceLoad)
     contract('rt,rs,rany,b')
     self.assets[loaderId] = self.assets[loaderId] or {}
@@ -99,6 +123,8 @@ function DataContext:getAsset(loaderId, assetId, forceLoad)
 end
 
 ---Releases all asset references for a given loaderId.
+-- @tparam string loaderId the ID for the asset loader function
+-- @return the DataContext instance
 function DataContext:releaseAssets(loaderId)
     contract('rt,rs')
     if self.assets[loaderId] then
@@ -106,16 +132,24 @@ function DataContext:releaseAssets(loaderId)
             self.assets[loaderId][k] = nil
         end
     end
+    return self
 end
 
 ---Registers a data decoder to a given id.
+-- 
 -- Data decoders are functions that accept an input and build a corresponding Lua table of data. These are used by the Engine:importData() function to read data into the engine.
+-- @tparam string id the ID for the data decoder
+-- @tparam function|functable decoder the data decoder
+-- @return the DataContext instance
 function DataContext:registerDataDecoder(id, decoder)
     contract('rt,rs,rf|t', self, id, decoder)
     self.dataDecoders[id] = decoder
     return self
 end
 
+---Returns a data decoder for a given id.
+-- @tparam string id the ID for the data decoder
+-- @return the data decoder if it exists, otherwise nil and an exception
 function DataContext:getDataDecoder(id)
     contract('rt,rs')
     if not self.dataDecoders[id] then
@@ -125,13 +159,20 @@ function DataContext:getDataDecoder(id)
 end
 
 ---Registers a data encoder to a given id.
--- Data encoders are functions that accept an input and an optional string path. If path is not specified, encoders should return a string representation of the input. If path is specified, then the string value is written out to an external file at path. These are used by Engine:exportData() to write data out from the engine.
+-- 
+-- Data encoders are functions that accept an input and an optional string path. If path is not specified, encoders should return a deterministic string representation of the input. If path is specified, then the encoder can use this path to write out to an external file. These are used by Engine:exportData() to write data out from the engine.
+-- @tparam string id the ID for the data encoder
+-- @tparam function|functable encoder the data encoder
+-- @return the DataContext instance
 function DataContext:registerDataEncoder(id, encoder)
     contract('rt,rs,rf|t', self, id, encoder)
     self.dataEncoders[id] = encoder
     return self
 end
 
+---Returns a data encoder for a given id.
+-- @tparam string id the ID for the data encoder
+-- @return the data encoder if it exists, otherwise nil and an exception
 function DataContext:getDataEncoder(id)
     contract('rt,rs')
     if not self.dataEncoders[id] then
@@ -140,11 +181,22 @@ function DataContext:getDataEncoder(id)
     return self.dataEncoders[id]
 end
 
+---Builds a new `rude.logging.Logger` instance and registers it to a given id.
+-- @tparam string id the ID for the logger
+-- @tparam function fnc the log function
+-- @tparam number minSeverity the minimum severity value for the logger
+-- @return the logger
 function DataContext:registerLogger(id, fnc, minSeverity)
+    contract('rt,rs,f,n')
     self.loggers[id] = logging.Logger(fnc, minSeverity)
     return self.loggers[id]
 end
 
+---Logs a payload using a given logger id.
+-- @tparam string id the ID for the logger
+-- @tparam any payload the data sent to the logger
+-- @param ... additional parameters passed to the logger function
+-- @return true if logging was successful, other nil and an exception
 function DataContext:log(id, payload, ...)
     if self.loggers[id] then
         self.loggers[id]:log(payload, ...)
