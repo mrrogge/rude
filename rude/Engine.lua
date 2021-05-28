@@ -370,8 +370,9 @@ end
 
 ---Returns the scene that is the specified offset number from the top.
 -- 
--- e.g. passing 0 would return the top scene, passing 1 would return the scene 2nd from the top. Passing nothing defaults to 0.
+-- e.g. passing 0 would return the top scene, passing 1 would return the scene 2nd from the top. Passing nothing defaults to 0, i.e. the top scene.
 -- @tparam[opt] number offset the index offset from the top of the stack.
+-- @return the scene instance if one exists, otherwise nil and an exception
 function Engine:getSceneFromTop(offset)
     c('rt,n')
     offset = offset or 0
@@ -379,8 +380,10 @@ function Engine:getSceneFromTop(offset)
     return scene
 end
 
----Returns the scene at the specified index to the stack.  
--- If no scene exists at that stack index, an error will be raised.
+---Returns the scene at the specified index to the stack.
+-- Similar to getSceneFromTop(), except an idx of 1 returns the bottom scene, 2 returns the 2nd from the bottom, and so on.
+-- @tparam number idx the scene index number
+-- @return the scene instance if one exists, otherwise nil and an exception
 function Engine:getSceneAtIndex(idx)
     c('rt,rn')
     local scene = self._sceneStack[idx]
@@ -388,7 +391,7 @@ function Engine:getSceneAtIndex(idx)
 end
 
 ---Adds a scene to the top of the stack.  
--- Note: unregistered scenes can be added to the stack by passing the scene object.
+-- @tparam number|string|rude.Scene scene the scene instance to push, or an ID for a registered scene
 function Engine:pushScene(scene)
     c('rt,rn|s|t')
     local id
@@ -413,8 +416,9 @@ function Engine:popScene()
     return table.remove(self._sceneStack)
 end
 
----Lookup scene to see if it has an id registered.  
--- If it is, returns the ID, otherwise return nothing.
+---Checks if a scene instance is currently registered to the engine.
+-- @tparam rude.Scene scene the scene instance
+-- @treturn number|string|false the corresponding ID for the scene if it is registered, otherwise false
 function Engine:isSceneRegistered(scene)
     c('rt,rt')
     for k,v in pairs(self._scenes) do
@@ -424,8 +428,10 @@ function Engine:isSceneRegistered(scene)
     end
 end
 
----Does a pop(), then push() to the scene stack.  
--- Returns the popped scene if there was one.
+---Swaps out the top scene for a different scene.
+-- Equivalent to a popScene() call followed by a pushScene() call.
+-- @tparam number|string|rude.Scene scene the new scene instance, or an ID corresponding to a registered scene
+-- @treturn the popped scene instance if one exists, otherwise nil and an exception
 function Engine:swapScene(scene)
     c('rt,rn|s|t')
     local id
@@ -444,12 +450,10 @@ end
 
 --------------------------------------------------------------------------------
 
----loads a general plugin into this engine.  
--- A plugin should be a function or callable table that accepts the engine as
--- the first parameter. Additional parameters can be passed for plugin
--- configuration.  
--- plugin can be either a require path to a plugin module, or the actual plugin
--- object.
+---Applies a plugin to this engine.
+-- A plugin should be a function or callable table that accepts the engine as the first parameter. Additional parameters can be passed for plugin configuration.  
+-- @tparam function|table plugin the plugin
+-- @param ... additional parameters to pass to the plugin call.
 function Engine:usePlugin(plugin, ...)
     c('rt,rt|f|s', self, plugin)
     if type(plugin) == 'string' then
@@ -458,14 +462,20 @@ function Engine:usePlugin(plugin, ...)
     plugin(self, ...)
 end
 
----Sets a new active data context for all context-specific operations.
--- If context is nil, the active context is set to the engine's default context instance.
+---Changes the current active DataContext instance for the engine.
+-- @tparam[opt] rude.DataContext context the DataContext instance. If not specified, uses the engine's default context.
+-- @treturn the Engine instance
 function Engine:useContext(context)
     c('rt,t')
     self.currentContext = context or self.dataContext
     return self
 end
 
+---Calls a function f using a given DataContext instance.
+-- @tparam rude.DataContext|nil context the DataContext instance. Pass nil explicitly to use the engine's default context.
+-- @tparam function|functable f the function or table to call
+-- @param ... additional parameters to pass to f
+-- @return the Engine instance
 function Engine:withContext(context, f, ...)
     c('rt,t,rf|t')
     local prevContext = self.currentContext
@@ -481,7 +491,10 @@ function Engine:getCurrentContext()
 end
 
 ---Registers a component class to a string id.
--- If context is a DataContext instance, the class will be registered to it. Otherwise if context is nil, the class will be registered to the Engine's default context.
+-- @tparam string id the ID for the component class
+-- @tparam class class the component class
+-- @tparam[opt] rude.DataContext context the DataContext instance to use. If not specified, the class will be registered to the engine's current context.
+-- @return the Engine instance
 function Engine:registerComClass(id, class, context)
     c('rt,rs,rt,t')
     context = context or self.currentContext
@@ -490,6 +503,9 @@ function Engine:registerComClass(id, class, context)
 end
 
 ---Returns a registered component class.
+-- @tparam string id the ID for the component class
+-- @tparam[opt] rude.DataContext context the DataContext instance to use. If not specified, the class will be looked up from the engine's current context.
+-- @return the component class if it exists, otherwise nil and an exception
 function Engine:getComClass(id, context)
     c('rt,rs,t')
     context = context or self.currentContext
@@ -503,6 +519,10 @@ function Engine:registerClass(class, context)
     return self
 end
 
+---Registers a function to an ID.
+-- @tparam string id the ID for the function
+-- @tparam function fnc the function to register
+-- @tparam[opt] rude.DataContext context the DataContext instance to use. If not specified, the function will be registered to the engine's current context.
 function Engine:registerFunction(id, fnc, context)
     c('rt,rs,rf,t')
     context = context or self.currentContext
@@ -510,18 +530,28 @@ function Engine:registerFunction(id, fnc, context)
     return self
 end
 
+---Returns a registered function.
+-- @tparam string id the ID for the function
+-- @tparam[opt] rude.DataContext context the DataContext instance to use. If not specified, the function will be looked up from the engine's current context.
 function Engine:getFunction(id, context)
     c('rt,rs,t')
     context = context or self.currentContext
     return context:getFunction(id)
 end
 
+---Registers an asset loader to an ID.
+-- @tparam string id the ID for the asset loader
+-- @tparam function|functable loader the asset loader to register
+-- @tparam[opt] rude.DataContext context the DataContext instance to use. If not specified, the asset loader will be registered to the engine's current context.
 function Engine:registerAssetLoader(id, loader, context)
     c('rt,rs,rf|t,t')
     context = context or self.currentContext
     return context:registerAssetLoader(id, loader)
 end
 
+---Returns a registered asset loader.
+-- @tparam string id the ID for the asset loader
+-- @tparam[opt] rude.DataContext context the DataContext instance to use. If not specified, the asset loader will be looked up from the engine's current context.
 function Engine:getAssetLoader(id, context)
     c('rt,rs,t')
     context = context or self.currentContext
