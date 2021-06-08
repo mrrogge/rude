@@ -5,7 +5,10 @@
 local contract = require('rude._contract')
 local bitserFound, bitser = pcall(require, 'bitser')
 
--- Decodes a bitser string input and returns the result if successful, otherwise returns nil and an error message.
+---Decodes a bitser string input into corresponding data.
+-- @dDec bitser-string
+-- @tparam string input the bitser string
+-- @return the decoded data if successful, otherwise nil and an error message
 local function bitserStringDecoder(input)
     contract('rs')
     local ok, result = pcall(bitser.loads, input)
@@ -16,7 +19,10 @@ local function bitserStringDecoder(input)
     end
 end
 
--- Decodes bitser data from an external file path and returns the result if successful, otherwise returns nil and an error message.
+---Decodes bitser data from an external file path using `love.filesystem.read()`.
+-- @dDec bitser-file-love
+-- @tparam string path the path to the external file.
+-- @return the decoded data if successful, otherwise nil and an error message.
 local function bitserLoveFileDecoder(path)
     contract('rs')
     local ok, result = pcall(bitser.loadLoveFile, path)
@@ -27,10 +33,15 @@ local function bitserLoveFileDecoder(path)
     end
 end
 
--- Encodes Lua data input into a bitser string and optionally writes it to an external file.
--- If path is specified, the bitser string is written out to a file at path. Returns true if successful, otherwise returns nil and an error message. Note that LOVE2D is required to write out to a file.
--- If path is not specified, the input is encoded. The result is returned if successful, otherwise returns nil and an error message.
+---Encodes Lua data input into a bitser string and optionally writes it to an external file.
+-- 
+-- If path is specified, the bitser string is written out to a file using `love.filesystem.write()`. If love is not available, the encoder can still be used without specifying path, in which case the encoded data will be returned as a string.
+-- @dEnc bitser
+-- @tparam number|bool|string|table input the data to encode.
+-- @tparam[opt] string path the path to the external file that will be written.
+-- @return if successful and path was specified, returns true. If successful and path was not specified, returns the encoded string. If not successful, returns nil and an error message.
 local function bitserEncoder(input, path)
+    contract('rn|b|s|t,s')
     local ok, result
     if path then
         if love then

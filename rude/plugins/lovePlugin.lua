@@ -3,7 +3,13 @@
 
 local c = require('rude._contract')
 
---an asset loader for fonts
+---Builds a font from an id using `love.graphics.newFont()`.
+-- id must be a string of comma-separated values that matches an interface for `newFont()`. For example:
+-- 
+-- "myfont.ttf,12"
+-- @assetLoader font
+-- @tparam string id a string of comma-separated font parameters.
+-- @return the font object.
 local function fontAssetLoader(id)
     local args = {}
     local i = 1
@@ -37,6 +43,11 @@ local function fontAssetLoader(id)
     end
 end
 
+---Builds an image from an external file using `love.graphics.newImage()`.
+-- @assetLoader image
+-- @tparam string path the path to the external image file.
+-- @return the image object.
+
 ---Applies this plugin to an engine.
 -- @function __call
 -- @tparam rude.Engine engine The targeted engine.
@@ -62,6 +73,7 @@ return function(engine, context)
 
     ---Sets up the LOVE environment to use callback functions defined for this engine.
     -- Any modifications made to the LOVE callbacks prior to calling attach() will be preserved.
+    -- @patch love.attach
     engine.love.attach = function()
         if engine.love._attached then return end
         engine.love._initCallbacks.load = love.load
@@ -139,6 +151,7 @@ return function(engine, context)
 
     ---Detaches the engine from the LOVE environment.
     -- This resets all LOVE callbacks to their original functions. Does nothing if the engine is not currently attached.
+    -- @patch love.detach
     engine.love.detach = function()
         if not engine.love._attached then return end
         for k,v in pairs(engine.love._initCallbacks) do
